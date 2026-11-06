@@ -1,0 +1,90 @@
+{
+  "expo": {
+    "name": "Mi Colegio",
+    "slug": "mi-colegio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.micolegio.app",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "whatsapp",
+          "tg",
+          "ms-word",
+          "ms-excel",
+          "ms-powerpoint",
+          "googledocs",
+          "googlesheets",
+          "googleslides",
+          "googledrive",
+          "dbx-dropbox",
+          "ms-onedrive",
+          "claude",
+          "chatgpt",
+          "gemini",
+          "grok"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.micolegio.app",
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-web-browser",
+      "expo-sharing",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Mi Colegio usa el micrófono para grabar clases y notas de voz."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mi Colegio accede a tus fotos para cargar el logo del colegio y guardar materiales.",
+          "cameraPermission": "Mi Colegio usa la cámara para fotografiar el pizarrón, apuntes y materiales.",
+          "microphonePermission": "Mi Colegio usa el micrófono para grabar videos."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Mi Colegio accede a tus contactos para compartir materiales con compañeros y profesores."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Mi Colegio guarda tus exámenes y entregas en el calendario del teléfono."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#4F7CF7"
+        }
+      ]
+    ],
+    "scheme": "micolegio"
+  }
+}
