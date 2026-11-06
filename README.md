@@ -47,6 +47,15 @@ npx expo start
 - **Notas:** colores por nota (9–10 verde fuerte, 7–8,99 verde suave, 4–6,99 amarillo, menos de 4 rojo), notas por cuatrimestre y boletín conceptual Nacional (E/MB/B/S/I), Provincia de Buenos Aires RITE (TEA/TEP/TED) o CABA (Finalizado/En proceso/No iniciado).
 - **Herramientas:** conversor de unidades, tabla periódica, fórmulas de física por tema, Google Maps, Google Traductor, mapas escolares del IGN, Educ.ar (recursos, Claves de Química y de Historia) y apuntes por materia.
 
+## Versión 3
+
+- **Archivos:** la lista se actualiza sola al volver a la pantalla o a la app, se puede deslizar hacia abajo para actualizar y hay un botón "Actualizar". Aviso de que las carpetas de cada materia se crean solas.
+- **Horario:** horario distinto según el día (p. ej. los martes hasta las 14:15), recreos con distinta duración (5, 15 minutos...) y almuerzo con hora de inicio y duración ajustables.
+- **Boletín:** se comparte siempre como imagen (`react-native-view-shot`).
+- **Fechas del colegio:** semanas de intensificación, recuperatorios (dic. / feb.-mar.), asuetos, paros, torneo puente, jornadas y otras actividades sin clases (Más → Feriados). Se marcan en Agenda, Inicio y Asistencia. Las notas pueden cargarse como regular, intensificación o recuperatorio; si se aprueba el recuperatorio, la materia queda aprobada.
+- **Asistencia y conducta** (Más): faltas de ¼, ½, ¾ y 1, justificadas o no, con foto o PDF del certificado; límite de faltas (25 por defecto); calendario mensual por colores; conducta por créditos (25, aviso en 10) o amonestaciones (aviso en 20, máximo 25), todo editable.
+- **Modo concentración:** activa el "No molestar" de Android desde la app (módulo nativo propio en `modules/concentracion`). En iPhone Apple no lo permite, así que se explica cómo hacerlo a mano.
+
 ## Notas importantes
 
 - **Feriados (18):** argentina.gob.ar no tiene una API, así que la app usa [ArgentinaDatos](https://argentinadatos.com) (`api.argentinadatos.com/v1/feriados/{año}`), un servicio abierto que replica los feriados oficiales incluidos los puentes. Las fechas del calendario escolar cambian por provincia y por año, por eso se cargan a mano desde la página oficial (hay un botón que la abre). Una mejora futura es tener esas fechas precargadas por provincia.

@@ -1,13 +1,14 @@
-import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { Alert, Text, View } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 import { ConfigBoletin } from '../components/boletin';
 import { Button, Card, Muted, NotaBadge, Row, Screen, Title } from '../components/ui';
 import { SISTEMAS, concepto, resumenMateria } from '../lib/grades';
-import { enviarWhatsApp } from '../lib/share';
+import { compartirArchivo } from '../lib/share';
 import { useData } from '../lib/store';
 import { colors } from '../lib/theme';
 
-const COL = { materia: 130, nota: 86, estado: 92 };
+const COL = { materia: 120, nota: 62, estado: 84 };
 
 export default function Boletin() {
   const { data } = useData();
@@ -20,16 +21,22 @@ export default function Boletin() {
     return <NotaBadge nota={n} texto={n == null ? '—' : c ? c.sigla : n.toFixed(1).replace('.', ',')} />;
   };
 
-  const texto = () =>
-    [
-      `📋 Boletín ${data.profile.nombre ? `de ${data.profile.nombre} ` : ''}${data.school.nombre ? `· ${data.school.nombre}` : ''}`,
-      `Sistema: ${SISTEMAS[cfg.sistema].nombre}`,
-      '',
-      ...filas.map(({ m, r }) => {
-        const f = (n: number | null) => (n == null ? '—' : `${n.toFixed(1).replace('.', ',')}${concepto(cfg.sistema, n) ? ` ${concepto(cfg.sistema, n)!.sigla}` : ''}`);
-        return `${m.nombre}: 1°C ${f(r.c1)} | 2°C ${f(r.c2)} | Final ${f(r.final)}${r.aprobada === true ? ' ✅' : r.aprobada === false ? ' ❌' : ''}`;
-      }),
-    ].join('\n');
+  const hoja = useRef<ComponentRef<typeof View>>(null);
+  const [compartiendo, setCompartiendo] = useState(false);
+  const hayRecup = filas.some(({ r }) => r.recuperatorio != null);
+
+  // Se comparte siempre como imagen (WhatsApp, Telegram, mail, Drive...).
+  const compartir = async () => {
+    setCompartiendo(true);
+    try {
+      const uri = await captureRef(hoja as unknown as Parameters<typeof captureRef>[0], { format: 'png', quality: 1, result: 'tmpfile' });
+      await compartirArchivo(uri.startsWith('file://') ? uri : `file://${uri}`, 'image/png');
+    } catch {
+      Alert.alert('No se pudo', 'No se pudo armar la imagen del boletín.');
+    } finally {
+      setCompartiendo(false);
+    }
+  };
 
   if (editar || !cfg.configurado) return <Screen><ConfigBoletin alTerminar={() => setEditar(false)} /></Screen>;
 
@@ -42,15 +49,20 @@ export default function Boletin() {
         </Muted>
         <Row>
           <Button variant="soft" title="Cambiar sistema" onPress={() => setEditar(true)} />
-          <Button variant="soft" icon="💬" title="Compartir" onPress={() => enviarWhatsApp(texto())} />
+          <Button variant="soft" icon="🖼️" title="Compartir como imagen" onPress={compartir} disabled={compartiendo || filas.length === 0} />
         </Row>
       </Card>
-      <Card>
-        <ScrollView horizontal>
+      <View ref={hoja} collapsable={false} style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 8 }}>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text }}>
+          📋 Boletín{data.profile.nombre ? ` de ${data.profile.nombre} ${data.profile.apellido}`.trimEnd() : ''}
+        </Text>
+        <Muted>
+          {[data.school.nombre, [data.profile.anio, data.profile.curso].filter(Boolean).join(' '), SISTEMAS[cfg.sistema].nombre, new Date().toLocaleDateString('es-AR')].filter(Boolean).join(' · ')}
+        </Muted>
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row' }}>
-              {['Materia', '1° cuatr.', '2° cuatr.', 'Final', 'Estado'].map((h, i) => (
-                <Text key={h} style={{ width: i === 0 ? COL.materia : i === 4 ? COL.estado : COL.nota, color: colors.muted, fontWeight: '700' }}>{h}</Text>
+              {['Materia', '1° C', '2° C', 'Final', ...(hayRecup ? ['Recup.'] : []), 'Estado'].map((h, i, arr) => (
+                <Text key={h} style={{ width: i === 0 ? COL.materia : i === arr.length - 1 ? COL.estado : COL.nota, color: colors.muted, fontWeight: '700' }}>{h}</Text>
               ))}
             </View>
             {filas.map(({ m, r }) => (
@@ -59,6 +71,7 @@ export default function Boletin() {
                 <View style={{ width: COL.nota }}>{celda(r.c1)}</View>
                 <View style={{ width: COL.nota }}>{celda(r.c2)}</View>
                 <View style={{ width: COL.nota }}>{celda(r.final)}</View>
+                {hayRecup && <View style={{ width: COL.nota }}>{r.recuperatorio != null ? celda(r.recuperatorio) : null}</View>}
                 <Text style={{ width: COL.estado, fontWeight: '700', color: r.aprobada === true ? colors.success : r.aprobada === false ? colors.danger : colors.muted }}>
                   {r.aprobada === true ? 'Aprobada' : r.aprobada === false ? 'A recuperar' : 'En curso'}
                 </Text>
@@ -66,8 +79,7 @@ export default function Boletin() {
             ))}
             {filas.length === 0 && <Muted>Todavía no hay materias.</Muted>}
           </View>
-        </ScrollView>
-      </Card>
+      </View>
       {SISTEMAS[cfg.sistema].escala.length > 0 && (
         <Card>
           <Title>Referencias</Title>

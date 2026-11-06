@@ -39,7 +39,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.micolegio.app",
       "permissions": [
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.ACCESS_NOTIFICATION_POLICY"
       ]
     },
     "web": {

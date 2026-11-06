@@ -44,7 +44,12 @@ export type ScheduleConfig = {
   almuerzo: { activo: boolean; inicio: string; fin: string };
   duracionModulo: number; // minutos de cada hora cátedra
   recreo: { duracion: number; cadaModulos: number };
+  // Recreos con duración propia: "después del módulo N de cada turno, X minutos".
+  // Si la lista está vacía se usa la regla simple de `recreo`.
+  recreos?: { despuesDe: number; duracion: number }[];
   dias: number[]; // 1 = lunes ... 6 = sábado
+  // Horarios distintos para un día puntual (p. ej. los martes salen 14:15).
+  porDia?: Record<string, Partial<Record<TurnoId, { entrada: string; salida: string }>>>;
 };
 
 export type BlockTipo = 'materia' | 'recreo' | 'almuerzo';
@@ -71,6 +76,7 @@ export type Grade = {
   nota: number | null;
   estado: GradeEstado;
   periodo?: 1 | 2; // cuatrimestre
+  instancia?: 'regular' | 'intensificacion' | 'recuperatorio';
 };
 
 export type EventTipo = 'examen' | 'tp' | 'entrega' | 'torneo' | 'recordatorio' | 'otro';
@@ -123,6 +129,8 @@ export type AppData = {
   holidaysUpdated: string | null;
   schoolCalendar: SchoolCalendar;
   apuntes: Apunte[];
+  asistencia: Asistencia;
+  conducta: Conducta;
 };
 
 export type Holiday = {
@@ -137,4 +145,21 @@ export type SchoolCalendar = {
   finClases: string;
   recesoInicio: string;
   recesoFin: string;
+  fechas?: FechaEspecial[];
+};
+
+export type FechaEspecialTipo = 'intensificacion' | 'recuperatorio' | 'asueto' | 'paro' | 'torneo' | 'jornada' | 'otro';
+export type FechaEspecial = { id: string; tipo: FechaEspecialTipo; nombre: string; desde: string; hasta: string };
+
+export type Falta = { id: string; fecha: string; valor: number; justificada: boolean; certificadoUri?: string; nota?: string };
+export type Asistencia = { limite: number; faltas: Falta[] };
+
+export type Sancion = { id: string; fecha: string; valor: number; motivo: string };
+export type Conducta = {
+  sistema: 'creditos' | 'amonestaciones';
+  creditosIniciales: number;
+  alertaCreditos: number;
+  alertaAmonestaciones: number;
+  maximoAmonestaciones: number;
+  registros: Sancion[];
 };

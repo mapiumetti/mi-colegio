@@ -1,4 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
+import { completarDatos } from './store';
 import type { AppData } from './types';
 import { subcarpeta } from './files';
 
@@ -22,5 +23,5 @@ export const guardarBackupEnTelefono = (data: AppData) => crearArchivoBackup(dat
 export function leerBackup(texto: string): AppData {
   const b = JSON.parse(texto) as Partial<Backup>;
   if (b.app !== 'mi-colegio' || !b.data) throw new Error('El archivo no es una copia de seguridad de Mi Colegio.');
-  return b.data;
+  return completarDatos(b.data);
 }

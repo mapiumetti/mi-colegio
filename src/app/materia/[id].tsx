@@ -5,7 +5,7 @@ import { Alert, Text, View } from 'react-native';
 import { Button, Card, Chips, DateField, Field, ListItem, Muted, NotaBadge, Row, Screen, Title } from '../../components/ui';
 import { colors } from '../../lib/theme';
 import { uid, useData } from '../../lib/store';
-import { ESTADO, TIPO_NOTA, concepto, periodoDe, periodoDeFecha, resumenMateria } from '../../lib/grades';
+import { ESTADO, INSTANCIA, TIPO_NOTA, concepto, periodoDe, periodoDeFecha, resumenMateria } from '../../lib/grades';
 import type { Grade, GradeEstado, GradeTipo } from '../../lib/types';
 
 export default function MateriaDetalle() {
@@ -19,6 +19,7 @@ export default function MateriaDetalle() {
   const [nota, setNota] = useState('');
   const [estado, setEstado] = useState<GradeEstado>('pendiente');
   const [fecha, setFecha] = useState(new Date());
+  const [instancia, setInstancia] = useState<NonNullable<Grade['instancia']>>('regular');
   const [periodo, setPeriodo] = useState<1 | 2>(periodoDeFecha(new Date().toISOString()));
   const cfg = data.settings.boletin;
 
@@ -31,6 +32,7 @@ export default function MateriaDetalle() {
       fecha: fecha.toISOString(), nota: valor != null && !isNaN(valor) ? valor : null,
       estado: valor != null && !isNaN(valor) ? 'calificado' : estado,
       periodo,
+      instancia,
     };
     update((d) => ({ ...d, grades: [...d.grades, g] }));
     setTitulo(''); setNota('');
@@ -58,7 +60,7 @@ export default function MateriaDetalle() {
         <Title>{materia.nombre}</Title>
         <Muted>{[materia.profesor, materia.aula].filter(Boolean).join(' · ')}</Muted>
         <Row style={{ justifyContent: 'space-between' }}>
-          {([['1° cuatr.', r.c1], ['2° cuatr.', r.c2], ['Final', r.final]] as const).map(([l, n]) => (
+          {([['1° cuatr.', r.c1], ['2° cuatr.', r.c2], ['Final', r.final], ...(r.recuperatorio != null ? [['Recup.', r.recuperatorio]] : [])] as [string, number | null][]).map(([l, n]) => (
             <View key={l} style={{ alignItems: 'center', gap: 4 }}>
               <Text style={{ color: colors.muted, fontWeight: '600' }}>{l}</Text>
               <NotaBadge nota={n} texto={etiqueta(n)} grande={l === 'Final'} />
@@ -78,6 +80,8 @@ export default function MateriaDetalle() {
         <Field label="Título" placeholder="Parcial 1, TP 3..." value={titulo} onChangeText={setTitulo} />
         <DateField label="Fecha" mode="date" value={fecha} onChange={(d) => { setFecha(d); setPeriodo(periodoDeFecha(d.toISOString())); }} />
         <Chips options={[{ value: 1, label: '1° cuatrimestre' }, { value: 2, label: '2° cuatrimestre' }]} value={periodo} onChange={(v) => setPeriodo(v as 1 | 2)} />
+        <Muted>Instancia</Muted>
+        <Chips options={(Object.keys(INSTANCIA) as (keyof typeof INSTANCIA)[]).map((k) => ({ value: k, label: INSTANCIA[k] }))} value={instancia} onChange={setInstancia} />
         <Field label="Nota (dejar vacío si todavía no hay)" keyboardType="decimal-pad" placeholder="8,5" value={nota} onChangeText={setNota} />
         {!nota.trim() && (
           <Chips
@@ -96,7 +100,7 @@ export default function MateriaDetalle() {
           <ListItem
             key={g.id}
             title={g.titulo}
-            subtitle={`${TIPO_NOTA[g.tipo]} · ${periodoDe(g)}° cuatr. · ${new Date(g.fecha).toLocaleDateString('es-AR')}`}
+            subtitle={`${TIPO_NOTA[g.tipo]}${g.instancia && g.instancia !== 'regular' ? ` · ${INSTANCIA[g.instancia]}` : ''} · ${periodoDe(g)}° cuatr. · ${new Date(g.fecha).toLocaleDateString('es-AR')}`}
             right={g.nota != null ? <NotaBadge nota={g.nota} texto={String(g.nota).replace('.', ',')} /> : <Text style={{ color: ESTADO[g.estado].color, fontWeight: '700' }}>{ESTADO[g.estado].label}</Text>}
             onPress={() => cambiarEstado(g)}
             onLongPress={() => borrar(g)}
