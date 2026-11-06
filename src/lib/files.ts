@@ -13,6 +13,20 @@ export function subcarpeta(nombre: string): Directory {
   return dir;
 }
 
+const limpiar = (n: string) => n.replace(/[\\/:*?"<>|]/g, '_').trim();
+
+/** Carpeta de una materia: Documentos/MiColegio/<Materia> */
+export function carpetaMateria(nombre: string): Directory {
+  return subcarpeta(limpiar(nombre) || 'Materia');
+}
+
+/** Crea las carpetas de todas las materias que falten. */
+export function asegurarCarpetasMaterias(nombres: string[]) {
+  for (const n of nombres) {
+    try { carpetaMateria(n); } catch { /* ignorar */ }
+  }
+}
+
 /** Copia un archivo (de la cámara, el selector, una nube...) a la carpeta indicada. */
 export function guardarCopia(uriOrigen: string, destino: Directory, nombre?: string): File {
   const origen = new File(uriOrigen);

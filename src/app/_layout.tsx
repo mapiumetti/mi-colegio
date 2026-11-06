@@ -1,18 +1,31 @@
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import * as SystemUI from 'expo-system-ui';
+import { Fragment, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
 import { prepararNotificaciones } from '../lib/notifications';
-import { DataProvider } from '../lib/store';
-import { colors } from '../lib/theme';
+import { DataProvider, useData } from '../lib/store';
+import { aplicarTema, colors, PALETAS, type PaletaId } from '../lib/theme';
 
-export default function RootLayout() {
+function App() {
+  const { data, ready } = useData();
+  const sistema = useColorScheme();
+  const { modo, paleta } = data.settings;
+  const oscuro = modo === 'oscuro' || (modo === 'sistema' && sistema === 'dark');
+  const pal = (paleta in PALETAS ? paleta : 'azul') as PaletaId;
+  aplicarTema(oscuro, pal);
+  const claveTema = `${oscuro}-${pal}`;
+
   useEffect(() => {
-    prepararNotificaciones().catch(() => {});
-  }, []);
+    SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
+  }, [claveTema]);
 
+  if (!ready) return null;
+
+  // Al cambiar el tema se vuelve a dibujar toda la app con los colores nuevos.
   return (
-    <DataProvider>
-      <StatusBar style="dark" />
+    <Fragment key={claveTema}>
+      <StatusBar style={oscuro ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.card },
@@ -36,7 +49,27 @@ export default function RootLayout() {
         <Stack.Screen name="calculadora" options={{ title: 'Calculadora' }} />
         <Stack.Screen name="nubes" options={{ title: 'Nubes y documentos' }} />
         <Stack.Screen name="feriados" options={{ title: 'Feriados y calendario escolar' }} />
+        <Stack.Screen name="ajustes" options={{ title: 'Apariencia y copias de seguridad' }} />
+        <Stack.Screen name="boletin" options={{ title: 'Boletín' }} />
+        <Stack.Screen name="herramientas/index" options={{ title: 'Herramientas' }} />
+        <Stack.Screen name="herramientas/conversor" options={{ title: 'Conversor de unidades' }} />
+        <Stack.Screen name="herramientas/tabla-periodica" options={{ title: 'Tabla periódica' }} />
+        <Stack.Screen name="herramientas/fisica" options={{ title: 'Fórmulas de física' }} />
+        <Stack.Screen name="apuntes/index" options={{ title: 'Apuntes' }} />
+        <Stack.Screen name="apuntes/[id]" options={{ title: 'Apunte' }} />
       </Stack>
+    </Fragment>
+  );
+}
+
+export default function RootLayout() {
+  useEffect(() => {
+    prepararNotificaciones().catch(() => {});
+  }, []);
+
+  return (
+    <DataProvider>
+      <App />
     </DataProvider>
   );
 }

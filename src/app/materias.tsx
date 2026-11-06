@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import { Button, Card, Dot, Field, ListItem, Muted, Row, Screen, Title } from '../components/ui';
 import { uid, useData } from '../lib/store';
-import { subjectColors } from '../lib/theme';
+import { carpetaMateria } from '../lib/files';
+import { colors, subjectColors } from '../lib/theme';
 
 export default function Materias() {
   const { data, update } = useData();
@@ -14,6 +15,8 @@ export default function Materias() {
 
   const agregar = () => {
     if (!nombre.trim()) return;
+    // Cada materia tiene su carpeta en Mis archivos.
+    try { carpetaMateria(nombre.trim()); } catch { /* se crea más tarde */ }
     update((d) => ({ ...d, subjects: [...d.subjects, { id: uid(), nombre: nombre.trim(), profesor, aula, color }] }));
     setNombre(''); setProfesor(''); setAula('');
     setColor(subjectColors[(data.subjects.length + 1) % subjectColors.length]);
@@ -43,7 +46,7 @@ export default function Materias() {
         <Row>
           {subjectColors.map((c) => (
             <Pressable key={c} onPress={() => setColor(c)}>
-              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: '#111' }} />
+              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: colors.text }} />
             </Pressable>
           ))}
         </Row>

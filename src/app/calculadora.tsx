@@ -68,7 +68,7 @@ export default function Calculadora() {
                     borderWidth: 1, borderColor: colors.border, opacity: pressed ? 0.7 : 1,
                   })}
                 >
-                  <Text style={{ fontSize: fn ? 18 : 24, fontWeight: '600', color: op ? '#fff' : colors.text }}>{k}</Text>
+                  <Text style={{ fontSize: fn ? 18 : 24, fontWeight: '600', color: op ? colors.onPrimary : colors.text }}>{k}</Text>
                 </Pressable>
               );
             })}

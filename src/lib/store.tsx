@@ -6,7 +6,10 @@ const KEY = 'mi-colegio:data:v1';
 
 export const defaultData: AppData = {
   profile: { nombre: '', apellido: '', edad: '', anio: '', curso: '', orientacion: '', email: '', telefono: '' },
-  school: { nombre: '', logoUri: null, plataformaNombre: 'Plataforma del colegio', plataformaUrl: '' },
+  school: {
+    nombre: '', logoUri: null, plataformaNombre: 'Plataforma del colegio', plataformaUrl: '',
+    direccion: '', telefono: '', email: '', contactos: [],
+  },
   subjects: [],
   schedule: {
     turnos: [
@@ -23,6 +26,9 @@ export const defaultData: AppData = {
   grades: [],
   events: [],
   settings: {
+    modo: 'sistema',
+    paleta: 'azul',
+    boletin: { configurado: false, sistema: 'nacional', cuatrimestres: 'promedian', notaAprobacion: 6 },
     avisosPorDefecto: [1440, 60],
     sonidoPorDefecto: true,
     aiProvider: 'claude',
@@ -31,6 +37,7 @@ export const defaultData: AppData = {
   holidays: [],
   holidaysUpdated: null,
   schoolCalendar: { provincia: 'Nacional', inicioClases: '', finClases: '', recesoInicio: '', recesoFin: '' },
+  apuntes: [],
 };
 
 type Ctx = {
@@ -58,7 +65,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
             profile: { ...defaultData.profile, ...saved.profile },
             school: { ...defaultData.school, ...saved.school },
             schedule: { ...defaultData.schedule, ...saved.schedule },
-            settings: { ...defaultData.settings, ...saved.settings },
+            settings: {
+              ...defaultData.settings,
+              ...saved.settings,
+              boletin: { ...defaultData.settings.boletin, ...saved.settings?.boletin },
+            },
             schoolCalendar: { ...defaultData.schoolCalendar, ...saved.schoolCalendar },
           };
           latest.current = merged;
