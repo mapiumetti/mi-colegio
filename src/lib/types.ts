@@ -14,7 +14,13 @@ export type School = {
   logoUri: string | null; // Foto o GIF guardado en el dispositivo
   plataformaNombre: string;
   plataformaUrl: string;
+  direccion: string;
+  telefono: string;
+  email: string;
+  contactos: SchoolContact[]; // preceptor/a, directivos, secretaría, etc.
 };
+
+export type SchoolContact = { id: string; rol: string; nombre: string; telefono: string; email: string };
 
 export type Subject = {
   id: string;
@@ -64,6 +70,7 @@ export type Grade = {
   fecha: string; // ISO
   nota: number | null;
   estado: GradeEstado;
+  periodo?: 1 | 2; // cuatrimestre
 };
 
 export type EventTipo = 'examen' | 'tp' | 'entrega' | 'torneo' | 'recordatorio' | 'otro';
@@ -82,7 +89,21 @@ export type SchoolEvent = {
 
 export type AiProviderId = 'claude' | 'chatgpt' | 'gemini' | 'grok' | 'copilot';
 
+export type SistemaBoletin = 'numerico' | 'nacional' | 'pba' | 'caba';
+
+export type BoletinConfig = {
+  configurado: boolean;
+  sistema: SistemaBoletin;
+  cuatrimestres: 'promedian' | 'individual';
+  notaAprobacion: number;
+};
+
+export type Apunte = { id: string; subjectId?: string; titulo: string; texto: string; fecha: string };
+
 export type Settings = {
+  modo: 'sistema' | 'claro' | 'oscuro';
+  paleta: string;
+  boletin: BoletinConfig;
   avisosPorDefecto: number[];
   sonidoPorDefecto: boolean;
   aiProvider: AiProviderId;
@@ -101,6 +122,7 @@ export type AppData = {
   holidays: Holiday[];
   holidaysUpdated: string | null;
   schoolCalendar: SchoolCalendar;
+  apuntes: Apunte[];
 };
 
 export type Holiday = {

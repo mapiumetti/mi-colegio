@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.micolegio.app",
@@ -83,8 +83,20 @@
         {
           "color": "#4F7CF7"
         }
-      ]
+      ],
+      "./plugins/withMiColegioAndroid"
     ],
-    "scheme": "micolegio"
+    "scheme": [
+      "micolegio",
+      "com.micolegio.app"
+    ],
+    "extra": {
+      "cloud": {
+        "googleAndroidClientId": "",
+        "googleIosClientId": "",
+        "dropboxAppKey": "",
+        "onedriveClientId": ""
+      }
+    }
   }
 }

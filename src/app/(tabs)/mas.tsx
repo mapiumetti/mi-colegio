@@ -4,6 +4,8 @@ import { Screen, Title } from '../../components/ui';
 import { colors } from '../../lib/theme';
 
 const ITEMS: { icon: string; label: string; href: Href }[] = [
+  { icon: '🧰', label: 'Herramientas', href: '/herramientas' },
+  { icon: '📝', label: 'Apuntes', href: '/apuntes' },
   { icon: '👤', label: 'Mis datos', href: '/perfil' },
   { icon: '🏫', label: 'Mi colegio', href: '/colegio' },
   { icon: '📚', label: 'Materias', href: '/materias' },
@@ -14,6 +16,8 @@ const ITEMS: { icon: string; label: string; href: Href }[] = [
   { icon: '🧮', label: 'Calculadora', href: '/calculadora' },
   { icon: '☁️', label: 'Nubes y documentos', href: '/nubes' },
   { icon: '🇦🇷', label: 'Feriados', href: '/feriados' },
+  { icon: '📋', label: 'Boletín', href: '/boletin' },
+  { icon: '🎨', label: 'Apariencia y copias', href: '/ajustes' },
 ];
 
 export default function Mas() {

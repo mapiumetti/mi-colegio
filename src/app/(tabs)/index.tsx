@@ -56,7 +56,7 @@ export default function Inicio() {
       </Card>
 
       {feriadoHoy && (
-        <Card style={{ backgroundColor: '#FFF7E6' }}>
+        <Card style={{ backgroundColor: colors.highlight }}>
           <Title>🎉 Hoy no hay clases</Title>
           <Muted>{feriadoHoy.nombre} · {ETIQUETA_FERIADO[feriadoHoy.tipo]}</Muted>
         </Card>

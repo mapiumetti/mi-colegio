@@ -4,7 +4,7 @@ import {
   Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
   type StyleProp, type TextInputProps, type ViewStyle,
 } from 'react-native';
-import { colors, radius, spacing } from '../lib/theme';
+import { colorNota, colors, radius, spacing } from '../lib/theme';
 
 export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   if (!scroll) return <View style={[s.screen, { padding: spacing }]}>{children}</View>;
@@ -29,8 +29,8 @@ export function Muted({ children }: { children: ReactNode }) {
 
 type BtnProps = { title: string; onPress: () => void; variant?: 'primary' | 'soft' | 'danger'; icon?: string; disabled?: boolean; style?: StyleProp<ViewStyle> };
 export function Button({ title, onPress, variant = 'primary', icon, disabled, style }: BtnProps) {
-  const bg = variant === 'primary' ? colors.primary : variant === 'danger' ? '#FDECEC' : colors.primarySoft;
-  const fg = variant === 'primary' ? '#fff' : variant === 'danger' ? colors.danger : colors.primary;
+  const bg = variant === 'primary' ? colors.primary : variant === 'danger' ? (colors.dark ? '#4A1D1F' : '#FDECEC') : colors.primarySoft;
+  const fg = variant === 'primary' ? colors.onPrimary : variant === 'danger' ? colors.danger : colors.dark ? colors.text : colors.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -70,7 +70,7 @@ export function Chips<T extends string | number>({ options, value, onChange, mul
           onPress={() => onChange(o.value)}
           style={[s.chip, activo(o.value) && { backgroundColor: o.color ?? colors.primary, borderColor: o.color ?? colors.primary }]}
         >
-          <Text style={{ color: activo(o.value) ? '#fff' : colors.text, fontWeight: '600' }}>{o.label}</Text>
+          <Text style={{ color: activo(o.value) ? colors.onPrimary : colors.text, fontWeight: '600' }}>{o.label}</Text>
         </Pressable>
       ))}
     </Row>
@@ -122,7 +122,7 @@ export function DateField({ label, value, mode, onChange }: { label: string; val
         <Modal visible={iosOpen} transparent animationType="slide">
           <View style={s.modalBg}>
             <View style={s.modal}>
-              <DateTimePicker value={temp} mode={mode} display="spinner" locale="es-AR" onValueChange={(_e, d) => setTemp(d)} />
+              <DateTimePicker value={temp} mode={mode} display="spinner" locale="es-AR" themeVariant={colors.dark ? 'dark' : 'light'} onValueChange={(_e, d) => setTemp(d)} />
               <Button title="Listo" onPress={() => { onChange(temp); setIosOpen(false); }} />
             </View>
           </View>
@@ -149,17 +149,39 @@ export function ListItem({ title, subtitle, left, right, onPress, onLongPress }:
 
 export const Dot = ({ color }: { color: string }) => <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />;
 
-export const s = StyleSheet.create({
+function crearEstilos() {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   card: { backgroundColor: colors.card, borderRadius: radius, padding: spacing, gap: 10, borderWidth: 1, borderColor: colors.border },
   title: { fontSize: 18, fontWeight: '700', color: colors.text },
   muted: { color: colors.muted, fontSize: 14 },
   label: { color: colors.muted, fontSize: 13, fontWeight: '600' },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, color: colors.text },
+  input: { backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, color: colors.text },
   btn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center' },
   btnText: { fontSize: 16, fontWeight: '700' },
-  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff' },
+  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  modalBg: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' },
-  modal: { backgroundColor: '#fff', padding: spacing, borderTopLeftRadius: 20, borderTopRightRadius: 20, gap: 12, paddingBottom: 32 },
+  modalBg: { flex: 1, justifyContent: 'flex-end', backgroundColor: colors.overlay },
+  modal: { backgroundColor: colors.card, padding: spacing, borderTopLeftRadius: 20, borderTopRightRadius: 20, gap: 12, paddingBottom: 32 },
+  });
+}
+
+// Los estilos se recalculan cuando cambia el tema (claro/oscuro o colores).
+let cache: { clave: string; estilos: ReturnType<typeof crearEstilos> } | null = null;
+export const s = new Proxy({} as ReturnType<typeof crearEstilos>, {
+  get(_t, k: string) {
+    const clave = `${colors.dark}-${colors.primary}`;
+    if (!cache || cache.clave !== clave) cache = { clave, estilos: crearEstilos() };
+    return cache.estilos[k as keyof ReturnType<typeof crearEstilos>];
+  },
 });
+
+/** Nota con color: 9–10 verde fuerte, 7–8,99 verde suave, 4–6,99 amarillo, menos de 4 rojo. */
+export function NotaBadge({ nota, texto, grande }: { nota: number | null; texto?: string; grande?: boolean }) {
+  const c = colorNota(nota);
+  return (
+    <View style={{ backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: grande ? 14 : 10, paddingVertical: grande ? 8 : 4, minWidth: 44, alignItems: 'center' }}>
+      <Text style={{ color: c.fg, fontWeight: '800', fontSize: grande ? 22 : 15 }}>{texto ?? (nota != null ? nota.toFixed(2).replace('.', ',') : '—')}</Text>
+    </View>
+  );
+}

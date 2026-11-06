@@ -77,8 +77,8 @@ export default function Agenda() {
                     style={{
                       width: '14.28%', height: 44, textAlign: 'center', textAlignVertical: 'center', lineHeight: 40,
                       borderRadius: 10, overflow: 'hidden', fontWeight: sel ? '800' : '500',
-                      backgroundColor: sel ? colors.primary : fer ? '#FFE8CC' : enReceso(c) ? '#E6F6EC' : 'transparent',
-                      color: sel ? '#fff' : fer ? '#B45309' : colors.text,
+                      backgroundColor: sel ? colors.primary : fer ? colors.highlight : enReceso(c) ? colors.recess : 'transparent',
+                      color: sel ? colors.onPrimary : fer ? colors.highlightText : colors.text,
                     }}
                   >
                     {Number(c.slice(8))}{evs.length ? '•' : ''}
@@ -90,7 +90,7 @@ export default function Agenda() {
           </Card>
           <Card>
             <Title>{new Date(diaSel + 'T12:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</Title>
-            {feriadoDe(diaSel) && <Text style={{ color: '#B45309', fontWeight: '700' }}>🎉 {feriadoDe(diaSel)!.nombre} · {ETIQUETA_FERIADO[feriadoDe(diaSel)!.tipo]}</Text>}
+            {feriadoDe(diaSel) && <Text style={{ color: colors.highlightText, fontWeight: '700' }}>🎉 {feriadoDe(diaSel)!.nombre} · {ETIQUETA_FERIADO[feriadoDe(diaSel)!.tipo]}</Text>}
             {enReceso(diaSel) && <Text style={{ color: colors.success, fontWeight: '700' }}>🏖️ Receso escolar</Text>}
             {eventosDe(diaSel).length === 0 ? <Muted>Sin eventos.</Muted> : eventosDe(diaSel).map(renderEvento)}
           </Card>

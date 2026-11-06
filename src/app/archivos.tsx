@@ -5,12 +5,18 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, Text, View } from 'react-native';
 import { Button, Card, Field, ListItem, Muted, Row, Screen, Title, s } from '../components/ui';
-import { carpetaBase, esImagen, guardarCopia, iconoDe, mimeDe } from '../lib/files';
+import { asegurarCarpetasMaterias, carpetaBase, esImagen, guardarCopia, iconoDe, mimeDe } from '../lib/files';
+import { useData } from '../lib/store';
 import { compartirArchivo } from '../lib/share';
 import { colors } from '../lib/theme';
 
 export default function Archivos() {
-  const [dir, setDir] = useState<Directory>(() => carpetaBase());
+  const { data } = useData();
+  // Por defecto hay una carpeta por cada materia cargada.
+  const [dir, setDir] = useState<Directory>(() => {
+    asegurarCarpetasMaterias(data.subjects.map((m) => m.nombre));
+    return carpetaBase();
+  });
   const [items, setItems] = useState<(File | Directory)[]>([]);
   const [verImagen, setVerImagen] = useState<string | null>(null);
   const [nuevaCarpeta, setNuevaCarpeta] = useState('');

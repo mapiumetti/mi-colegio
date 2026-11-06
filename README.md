@@ -35,6 +35,18 @@ npx expo start
 | 17 | Word, Excel, Google Docs, etc. | Accesos a Word, Excel, PowerPoint, Google Docs/Sheets/Slides y Collabora (LibreOffice) | `nubes.tsx` |
 | 18 | Feriados y puentes / calendario escolar | Descarga automática semanal de feriados nacionales, trasladables y puentes; se marcan en Agenda e Inicio. Calendario escolar por provincia (inicio, receso invernal, fin) | `feriados.tsx`, `src/lib/holidays.ts` |
 
+## Versión 2
+
+- **Nubes:** conexión directa con Google Drive, Dropbox y OneDrive para ver, subir y bajar archivos (requiere registrar la app, ver [docs/NUBES.md](docs/NUBES.md)).
+- **Firma:** todas las versiones se firman con la misma clave, así se actualiza sin desinstalar (ver `plugins/withMiColegioAndroid.js` y el workflow).
+- **Apariencia:** modo claro, oscuro o como el teléfono, y 8 combinaciones de colores (Más → Apariencia y copias).
+- **IAs:** botones que abren la app instalada (Claude, ChatGPT, Gemini, Copilot, Grok) o la web si no está.
+- **Copias de seguridad:** al teléfono, a una carpeta elegida, a una nube conectada o a cualquier app con "Compartir"; también se pueden restaurar.
+- **Mi colegio:** dirección, teléfono, mail y lista de autoridades y teléfonos útiles (preceptor/a, directivos, etc.).
+- **Archivos:** una carpeta por cada materia; la grabadora pregunta en qué carpeta guardar.
+- **Notas:** colores por nota (9–10 verde fuerte, 7–8,99 verde suave, 4–6,99 amarillo, menos de 4 rojo), notas por cuatrimestre y boletín conceptual Nacional (E/MB/B/S/I), Provincia de Buenos Aires RITE (TEA/TEP/TED) o CABA (Finalizado/En proceso/No iniciado).
+- **Herramientas:** conversor de unidades, tabla periódica, fórmulas de física por tema, Google Maps, Google Traductor, mapas escolares del IGN, Educ.ar (recursos, Claves de Química y de Historia) y apuntes por materia.
+
 ## Notas importantes
 
 - **Feriados (18):** argentina.gob.ar no tiene una API, así que la app usa [ArgentinaDatos](https://argentinadatos.com) (`api.argentinadatos.com/v1/feriados/{año}`), un servicio abierto que replica los feriados oficiales incluidos los puentes. Las fechas del calendario escolar cambian por provincia y por año, por eso se cargan a mano desde la página oficial (hay un botón que la abre). Una mejora futura es tener esas fechas precargadas por provincia.

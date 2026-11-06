@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { Button, Card, Chips, Field, Muted, Row, s } from '../components/ui';
 import { PROVEEDORES, guardarClave, leerClave, preguntar, type Mensaje } from '../lib/ai';
-import { abrirConRespaldo, enviarTelegram, enviarWhatsApp } from '../lib/share';
+import { APPS, abrirApp } from '../lib/apps';
+import { enviarTelegram, enviarWhatsApp } from '../lib/share';
 import { useData } from '../lib/store';
 import { colors } from '../lib/theme';
 import type { AiProviderId } from '../lib/types';
@@ -67,12 +68,19 @@ export default function Ia() {
   return (
     <View style={s.screen}>
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+        <Card>
+          <Muted>Abrir la app de IA instalada en el teléfono</Muted>
+          <Row>
+            {PROVEEDORES.map((p) => <Button key={p.id} variant="soft" title={p.nombre} onPress={() => abrirApp(APPS[p.id])} />)}
+          </Row>
+        </Card>
+        <Muted>O chatear acá mismo con tu clave de API:</Muted>
         <Chips options={PROVEEDORES.map((p) => ({ value: p.id, label: p.nombre }))} value={provId} onChange={setProv} />
 
         {!prov.conApi ? (
           <Card>
             <Muted>{prov.nombre} no permite conectarse con una clave desde otras apps. Abrimos su app o su web oficial.</Muted>
-            <Button title={`Abrir ${prov.nombre}`} onPress={() => abrirConRespaldo(prov.web, prov.web)} />
+            <Button title={`Abrir ${prov.nombre}`} onPress={() => abrirApp(APPS[provId])} />
           </Card>
         ) : (
           <>
@@ -87,7 +95,7 @@ export default function Ia() {
                 <Row>
                   <Button title="Guardar" onPress={async () => { if (clave) { await guardarClave(provId, clave); setTieneClave(true); } setConfig(false); }} />
                   {tieneClave && <Button variant="danger" title="Borrar clave" onPress={async () => { await guardarClave(provId, ''); setTieneClave(false); }} />}
-                  <Button variant="soft" title={`Abrir ${prov.nombre}`} onPress={() => abrirConRespaldo(prov.appScheme ?? prov.web, prov.web)} />
+                  <Button variant="soft" title={`Abrir ${prov.nombre}`} onPress={() => abrirApp(APPS[provId])} />
                 </Row>
               </Card>
             )}
@@ -109,7 +117,7 @@ export default function Ia() {
               backgroundColor: m.role === 'user' ? colors.primary : colors.card, borderWidth: m.role === 'user' ? 0 : 1, borderColor: colors.border,
             }}
           >
-            <Text selectable style={{ color: m.role === 'user' ? '#fff' : colors.text, fontSize: 15 }}>{m.content}</Text>
+            <Text selectable style={{ color: m.role === 'user' ? colors.onPrimary : colors.text, fontSize: 15 }}>{m.content}</Text>
           </View>
         ))}
         {cargando && <ActivityIndicator color={colors.primary} />}

@@ -4,9 +4,10 @@ import {
   useAudioRecorder, useAudioRecorderState, type AudioPlayer,
 } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Text } from 'react-native';
-import { Button, Card, ListItem, Muted, Screen, Title } from '../components/ui';
-import { esAudio, guardarCopia, subcarpeta } from '../lib/files';
+import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Button, Card, ListItem, Muted, Screen, Title, s as st } from '../components/ui';
+import { carpetaMateria, esAudio, guardarCopia, subcarpeta } from '../lib/files';
+import { useData } from '../lib/store';
 import { compartirArchivo } from '../lib/share';
 import { colors } from '../lib/theme';
 
@@ -21,11 +22,17 @@ export default function Grabadora() {
   const [grabaciones, setGrabaciones] = useState<File[]>([]);
   const [sonando, setSonando] = useState<string | null>(null);
   const player = useRef<AudioPlayer | null>(null);
+  const { data } = useData();
+  const [pendiente, setPendiente] = useState<string | null>(null);
 
+  // Muestra las grabaciones de la carpeta general y de cada materia.
   const refrescar = useCallback(() => {
-    const dir = subcarpeta('Grabaciones');
-    setGrabaciones(dir.list().filter((x): x is File => x instanceof File && esAudio(x.name)).reverse());
-  }, []);
+    const carpetas = [subcarpeta('Grabaciones'), ...data.subjects.map((m) => carpetaMateria(m.nombre))];
+    const todos = carpetas.flatMap((d) => {
+      try { return d.list().filter((x): x is File => x instanceof File && esAudio(x.name)); } catch { return []; }
+    });
+    setGrabaciones(todos.sort((a, b) => b.name.localeCompare(a.name)));
+  }, [data.subjects]);
   useEffect(() => {
     refrescar();
     return () => player.current?.remove();
@@ -42,11 +49,17 @@ export default function Grabadora() {
   const detener = async () => {
     await recorder.stop();
     await setAudioModeAsync({ allowsRecording: false });
-    if (recorder.uri) {
-      const fecha = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-');
-      guardarCopia(recorder.uri, subcarpeta('Grabaciones'), `clase-${fecha}.m4a`);
-      refrescar();
-    }
+    if (recorder.uri) setPendiente(recorder.uri); // preguntamos en qué carpeta guardarla
+  };
+
+  const guardarEn = (materia?: { nombre: string }) => {
+    if (!pendiente) return;
+    const fecha = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-');
+    const dir = materia ? carpetaMateria(materia.nombre) : subcarpeta('Grabaciones');
+    const prefijo = materia ? materia.nombre.toLowerCase().replace(/\s+/g, '-') : 'grabacion';
+    guardarCopia(pendiente, dir, `${prefijo}-${fecha}.m4a`);
+    setPendiente(null);
+    refrescar();
   };
 
   const reproducir = (f: File) => {
@@ -77,6 +90,7 @@ export default function Grabadora() {
             key={g.uri}
             left={<Text style={{ fontSize: 22 }}>{sonando === g.uri ? '⏸️' : '▶️'}</Text>}
             title={g.name}
+            subtitle={g.parentDirectory.name}
             onPress={() => reproducir(g)}
             onLongPress={() =>
               Alert.alert(g.name, undefined, [
@@ -88,6 +102,24 @@ export default function Grabadora() {
           />
         ))}
       </Card>
+
+      <Modal visible={!!pendiente} transparent animationType="slide" onRequestClose={() => guardarEn()}>
+        <View style={st.modalBg}>
+          <View style={st.modal}>
+            <Title>¿En qué carpeta guardo la grabación?</Title>
+            <ScrollView style={{ maxHeight: 380 }}>
+              <Pressable onPress={() => guardarEn()} style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primarySoft, marginBottom: 8 }}>
+                <Text style={{ fontWeight: '700', color: colors.text }}>🎙️ Grabaciones (general)</Text>
+              </Pressable>
+              {data.subjects.map((m) => (
+                <Pressable key={m.id} onPress={() => guardarEn(m)} style={{ padding: 14, borderRadius: 12, backgroundColor: `${m.color}33`, marginBottom: 8 }}>
+                  <Text style={{ fontWeight: '700', color: colors.text }}>📂 {m.nombre}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
