@@ -51,6 +51,8 @@ function App() {
         <Stack.Screen name="feriados" options={{ title: 'Feriados y calendario escolar' }} />
         <Stack.Screen name="ajustes" options={{ title: 'Apariencia y copias de seguridad' }} />
         <Stack.Screen name="boletin" options={{ title: 'Boletín' }} />
+        <Stack.Screen name="asistencia" options={{ title: 'Asistencia y conducta' }} />
+        <Stack.Screen name="concentracion" options={{ title: 'Modo concentración' }} />
         <Stack.Screen name="herramientas/index" options={{ title: 'Herramientas' }} />
         <Stack.Screen name="herramientas/conversor" options={{ title: 'Conversor de unidades' }} />
         <Stack.Screen name="herramientas/tabla-periodica" options={{ title: 'Tabla periódica' }} />

@@ -1,15 +1,20 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useState, type ReactNode } from 'react';
 import {
-  Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
+  Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, View,
   type StyleProp, type TextInputProps, type ViewStyle,
 } from 'react-native';
 import { colorNota, colors, radius, spacing } from '../lib/theme';
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({ children, scroll = true, onRefresh }: { children: ReactNode; scroll?: boolean; onRefresh?: () => void }) {
   if (!scroll) return <View style={[s.screen, { padding: spacing }]}>{children}</View>;
   return (
-    <ScrollView style={s.screen} contentContainerStyle={{ padding: spacing, paddingBottom: 48, gap: 12 }} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={s.screen}
+      contentContainerStyle={{ padding: spacing, paddingBottom: 48, gap: 12 }}
+      keyboardShouldPersistTaps="handled"
+      refreshControl={onRefresh ? <RefreshControl refreshing={false} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} /> : undefined}
+    >
       {children}
     </ScrollView>
   );

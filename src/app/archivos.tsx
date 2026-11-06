@@ -2,8 +2,9 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File } from 'expo-file-system';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, Text, View } from 'react-native';
+import { Alert, AppState, Modal, Pressable, Text, View } from 'react-native';
 import { Button, Card, Field, ListItem, Muted, Row, Screen, Title, s } from '../components/ui';
 import { asegurarCarpetasMaterias, carpetaBase, esImagen, guardarCopia, iconoDe, mimeDe } from '../lib/files';
 import { useData } from '../lib/store';
@@ -31,23 +32,33 @@ export default function Archivos() {
     }
   }, [dir]);
   useEffect(refrescar, [refrescar]);
+  // Se actualiza solo al volver a esta pantalla (p. ej. desde la grabadora)
+  // y al volver a la app (p. ej. después de usar la cámara o el visor de PDF).
+  useFocusEffect(refrescar);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && refrescar());
+    return () => sub.remove();
+  }, [refrescar]);
 
   const desdeCamara = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) return Alert.alert('Permiso necesario', 'Habilitá la cámara en los ajustes.');
     const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images', 'videos'], quality: 0.8 });
-    if (!r.canceled) { r.assets.forEach((a) => guardarCopia(a.uri, dir, a.fileName ?? `foto-${Date.now()}.jpg`)); refrescar(); }
+    if (!r.canceled) r.assets.forEach((a) => guardarCopia(a.uri, dir, a.fileName ?? `foto-${Date.now()}.jpg`));
+    refrescar();
   };
 
   const desdeGaleria = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images', 'videos'], allowsMultipleSelection: true });
-    if (!r.canceled) { r.assets.forEach((a) => guardarCopia(a.uri, dir, a.fileName ?? undefined)); refrescar(); }
+    if (!r.canceled) r.assets.forEach((a) => guardarCopia(a.uri, dir, a.fileName ?? undefined));
+    refrescar();
   };
 
   // El selector del sistema muestra Google Drive, Dropbox, OneDrive, iCloud Drive, etc. si están instalados.
   const importar = async () => {
     const r = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
-    if (!r.canceled) { r.assets.forEach((a) => guardarCopia(a.uri, dir, a.name)); refrescar(); }
+    if (!r.canceled) r.assets.forEach((a) => guardarCopia(a.uri, dir, a.name));
+    refrescar();
   };
 
   const crearCarpeta = () => {
@@ -77,17 +88,26 @@ export default function Archivos() {
     ]);
 
   return (
-    <Screen>
+    <Screen onRefresh={refrescar}>
       <Card>
-        <Title>📁 {enRaiz ? 'MiColegio' : dir.name}</Title>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Title>📁 {enRaiz ? 'MiColegio' : dir.name}</Title>
+          <Button variant="soft" icon="🔄" title="Actualizar" onPress={refrescar} />
+        </Row>
+        {enRaiz && (
+          <Muted>
+            ℹ️ Las carpetas de cada materia se crean solas cuando cargás "Mis materias". Si querés, también podés crear otras a mano abajo.
+          </Muted>
+        )}
         {!enRaiz && <Button variant="soft" title="‹ Volver a la carpeta anterior" onPress={() => setDir(dir.parentDirectory)} />}
         <Row>
           <Button variant="soft" icon="📷" title="Cámara" onPress={desdeCamara} />
           <Button variant="soft" icon="🖼️" title="Galería" onPress={desdeGaleria} />
           <Button variant="soft" icon="☁️" title="Importar (Drive, Dropbox, iCloud...)" onPress={importar} />
         </Row>
+        <Muted>Deslizá hacia abajo o tocá Actualizar para ver los archivos nuevos.</Muted>
         <Row style={{ flexWrap: 'nowrap' }}>
-          <View style={{ flex: 1 }}><Field label="Nueva carpeta" placeholder="Matemática" value={nuevaCarpeta} onChangeText={setNuevaCarpeta} /></View>
+          <View style={{ flex: 1 }}><Field label="Nueva carpeta (opcional)" placeholder="Matemática" value={nuevaCarpeta} onChangeText={setNuevaCarpeta} /></View>
           <Button title="Crear" onPress={crearCarpeta} style={{ marginTop: 18 }} />
         </Row>
       </Card>

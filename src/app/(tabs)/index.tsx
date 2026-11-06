@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, Dot, ListItem, Muted, Row, Screen, Title } from '../../components/ui';
-import { ETIQUETA_FERIADO, descargarFeriados } from '../../lib/holidays';
+import { FECHA_TIPO, fechasDe, motivoSinClases } from '../../lib/fechas';
+import { descargarFeriados } from '../../lib/holidays';
 import { TIPO_EVENTO } from '../../lib/notifications';
 import { abrirPlataforma } from '../../lib/share';
 import { useData } from '../../lib/store';
@@ -26,10 +27,11 @@ export default function Inicio() {
   const hoy = new Date();
   const ahora = hoy.getHours() * 60 + hoy.getMinutes();
   const materia = (id?: string) => subjects.find((x) => x.id === id);
-  const clasesHoy = blocks.filter((b) => b.dia === hoy.getDay() && b.tipo === 'materia' && b.subjectId);
+  const clasesHoy = motivoSinClases(data, ymd(new Date())) ? [] : blocks.filter((b) => b.dia === hoy.getDay() && b.tipo === 'materia' && b.subjectId);
   const proximos = events.filter((e) => new Date(e.fecha) >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 4);
   const pendientes = data.grades.filter((g) => g.estado === 'pendiente').length;
-  const feriadoHoy = holidays.find((h) => h.fecha === ymd(hoy));
+  const sinClases = motivoSinClases(data, ymd(hoy));
+  const especialHoy = fechasDe(data, ymd(hoy)).filter((f) => !FECHA_TIPO[f.tipo].sinClases);
   const proxFeriado = holidays.filter((h) => h.fecha > ymd(hoy)).sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
 
   return (
@@ -55,12 +57,18 @@ export default function Inicio() {
         )}
       </Card>
 
-      {feriadoHoy && (
+      {sinClases && (
         <Card style={{ backgroundColor: colors.highlight }}>
           <Title>🎉 Hoy no hay clases</Title>
-          <Muted>{feriadoHoy.nombre} · {ETIQUETA_FERIADO[feriadoHoy.tipo]}</Muted>
+          <Muted>{sinClases}</Muted>
         </Card>
       )}
+      {especialHoy.map((f) => (
+        <Card key={f.id} style={{ borderLeftWidth: 6, borderLeftColor: FECHA_TIPO[f.tipo].color }}>
+          <Title>{FECHA_TIPO[f.tipo].emoji} {FECHA_TIPO[f.tipo].label}</Title>
+          {!!f.nombre && <Muted>{f.nombre}</Muted>}
+        </Card>
+      ))}
 
       <Card>
         <Title>📅 {DIAS_LARGO[hoy.getDay()]}</Title>
@@ -114,6 +122,10 @@ export default function Inicio() {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Button style={{ flex: 1 }} variant="soft" icon="🤖" title="Preguntar a la IA" onPress={() => router.push('/ia')} />
         <Button style={{ flex: 1 }} variant="soft" icon="🧮" title="Calculadora" onPress={() => router.push('/calculadora')} />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Button style={{ flex: 1 }} icon="🎧" title="Concentración" onPress={() => router.push('/concentracion')} />
+        <Button style={{ flex: 1 }} variant="soft" icon="🙋" title="Asistencia" onPress={() => router.push('/asistencia')} />
       </View>
     </Screen>
   );

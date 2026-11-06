@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Text } from 'react-native';
-import { Button, Card, Chips, DateField, ListItem, Muted, Row, Screen, Title } from '../components/ui';
+import { ActivityIndicator, Alert, Linking, Text, View } from 'react-native';
+import { Button, Card, Chips, DateField, Field, ListItem, Muted, Row, Screen, Title } from '../components/ui';
+import { FECHA_TIPO } from '../lib/fechas';
 import { ETIQUETA_FERIADO, FUENTE_CALENDARIO_ESCOLAR, FUENTE_FERIADOS, PROVINCIAS, descargarFeriados } from '../lib/holidays';
-import { useData } from '../lib/store';
+import { uid, useData } from '../lib/store';
 import { colors } from '../lib/theme';
 import { formatYmd, ymd } from '../lib/time';
-import type { SchoolCalendar } from '../lib/types';
+import type { FechaEspecialTipo, SchoolCalendar } from '../lib/types';
 
 const aFecha = (s: string) => (s ? new Date(`${s}T12:00`) : new Date());
 
@@ -27,6 +28,24 @@ export default function Feriados() {
       setCargando(false);
     }
   };
+
+  const [tipo, setTipo] = useState<FechaEspecialTipo>('asueto');
+  const [nombre, setNombre] = useState('');
+  const [desde, setDesde] = useState(new Date());
+  const [hasta, setHasta] = useState(new Date());
+  const fechas = [...(cal.fechas ?? [])].sort((a, b) => a.desde.localeCompare(b.desde));
+
+  const agregarFecha = () => {
+    const d = ymd(desde);
+    const h = ymd(hasta) < d ? d : ymd(hasta);
+    setCal({ fechas: [...(cal.fechas ?? []), { id: uid(), tipo, nombre: nombre.trim(), desde: d, hasta: h }] });
+    setNombre('');
+  };
+  const borrarFecha = (id: string) =>
+    Alert.alert('Borrar fecha', '¿Seguro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Borrar', style: 'destructive', onPress: () => setCal({ fechas: (cal.fechas ?? []).filter((f) => f.id !== id) }) },
+    ]);
 
   const hoy = ymd(new Date());
   const proximos = data.holidays.filter((h) => h.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha));
@@ -68,6 +87,31 @@ export default function Feriados() {
         <DateField label="Fin del receso invernal" mode="date" value={aFecha(cal.recesoFin)} onChange={(d) => setCal({ recesoFin: ymd(d) })} />
         <DateField label="Fin de clases" mode="date" value={aFecha(cal.finClases)} onChange={(d) => setCal({ finClases: ymd(d) })} />
         <Button variant="soft" title="Ver calendario escolar oficial" onPress={() => Linking.openURL(FUENTE_CALENDARIO_ESCOLAR)} />
+      </Card>
+
+      <Card>
+        <Title>🗓️ Fechas del colegio</Title>
+        <Muted>
+          Semanas de intensificación, recuperatorios (diciembre o febrero-marzo), asuetos, paros, torneo puente u otra
+          actividad sin clases. Se marcan en la Agenda, en Inicio y en Asistencia (esos días no cuentan como falta).
+        </Muted>
+        <Chips options={(Object.keys(FECHA_TIPO) as FechaEspecialTipo[]).map((t) => ({ value: t, label: `${FECHA_TIPO[t].emoji} ${FECHA_TIPO[t].label}`, color: FECHA_TIPO[t].color }))} value={tipo} onChange={setTipo} />
+        <Field label="Nombre o detalle (opcional)" placeholder="Torneo intercolegial, paro docente..." value={nombre} onChangeText={setNombre} />
+        <Row style={{ flexWrap: 'nowrap' }}>
+          <View style={{ flex: 1 }}><DateField label="Desde" mode="date" value={desde} onChange={(d) => { setDesde(d); if (d > hasta) setHasta(d); }} /></View>
+          <View style={{ flex: 1 }}><DateField label="Hasta" mode="date" value={hasta} onChange={setHasta} /></View>
+        </Row>
+        <Button icon="➕" title="Agregar fecha" onPress={agregarFecha} />
+        {fechas.map((f) => (
+          <ListItem
+            key={f.id}
+            left={<Text style={{ fontSize: 20 }}>{FECHA_TIPO[f.tipo].emoji}</Text>}
+            title={f.nombre || FECHA_TIPO[f.tipo].label}
+            subtitle={`${formatYmd(f.desde)}${f.hasta !== f.desde ? ` al ${formatYmd(f.hasta)}` : ''} · ${FECHA_TIPO[f.tipo].sinClases ? 'Sin clases' : FECHA_TIPO[f.tipo].label}`}
+            onLongPress={() => borrarFecha(f.id)}
+            right={<Text onPress={() => borrarFecha(f.id)} style={{ color: colors.danger, fontSize: 18 }}>✕</Text>}
+          />
+        ))}
       </Card>
     </Screen>
   );

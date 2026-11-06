@@ -4,6 +4,8 @@ import { Screen, Title } from '../../components/ui';
 import { colors } from '../../lib/theme';
 
 const ITEMS: { icon: string; label: string; href: Href }[] = [
+  { icon: '🎧', label: 'Concentración', href: '/concentracion' },
+  { icon: '🙋', label: 'Asistencia y conducta', href: '/asistencia' },
   { icon: '🧰', label: 'Herramientas', href: '/herramientas' },
   { icon: '📝', label: 'Apuntes', href: '/apuntes' },
   { icon: '👤', label: 'Mis datos', href: '/perfil' },
@@ -35,7 +37,7 @@ export default function Mas() {
             })}
           >
             <Text style={{ fontSize: 34 }}>{it.icon}</Text>
-            <Text style={{ fontWeight: '700', color: colors.text }}>{it.label}</Text>
+            <Text style={{ fontWeight: '700', color: colors.text, textAlign: 'center' }}>{it.label}</Text>
           </Pressable>
         ))}
       </View>

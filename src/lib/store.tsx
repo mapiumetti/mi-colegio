@@ -38,7 +38,28 @@ export const defaultData: AppData = {
   holidaysUpdated: null,
   schoolCalendar: { provincia: 'Nacional', inicioClases: '', finClases: '', recesoInicio: '', recesoFin: '' },
   apuntes: [],
+  asistencia: { limite: 25, faltas: [] },
+  conducta: { sistema: 'creditos', creditosIniciales: 25, alertaCreditos: 10, alertaAmonestaciones: 20, maximoAmonestaciones: 25, registros: [] },
 };
+
+/** Mezcla datos guardados (o de una copia vieja) con los valores por defecto de esta versión. */
+export function completarDatos(saved: Partial<AppData>): AppData {
+  return {
+    ...defaultData,
+    ...saved,
+    profile: { ...defaultData.profile, ...saved.profile },
+    school: { ...defaultData.school, ...saved.school },
+    schedule: { ...defaultData.schedule, ...saved.schedule },
+    settings: {
+      ...defaultData.settings,
+      ...saved.settings,
+      boletin: { ...defaultData.settings.boletin, ...saved.settings?.boletin },
+    },
+    schoolCalendar: { ...defaultData.schoolCalendar, ...saved.schoolCalendar },
+    asistencia: { ...defaultData.asistencia, ...saved.asistencia },
+    conducta: { ...defaultData.conducta, ...saved.conducta },
+  };
+}
 
 type Ctx = {
   data: AppData;
@@ -57,21 +78,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     AsyncStorage.getItem(KEY)
       .then((raw) => {
         if (raw) {
-          const saved = JSON.parse(raw) as Partial<AppData>;
-          // Mezcla con los valores por defecto para tolerar versiones viejas de los datos.
-          const merged: AppData = {
-            ...defaultData,
-            ...saved,
-            profile: { ...defaultData.profile, ...saved.profile },
-            school: { ...defaultData.school, ...saved.school },
-            schedule: { ...defaultData.schedule, ...saved.schedule },
-            settings: {
-              ...defaultData.settings,
-              ...saved.settings,
-              boletin: { ...defaultData.settings.boletin, ...saved.settings?.boletin },
-            },
-            schoolCalendar: { ...defaultData.schoolCalendar, ...saved.schoolCalendar },
-          };
+          const merged = completarDatos(JSON.parse(raw) as Partial<AppData>);
           latest.current = merged;
           setData(merged);
         }

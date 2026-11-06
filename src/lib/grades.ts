@@ -90,9 +90,20 @@ export type ResumenMateria = {
   final: number | null;
   aprobada: boolean | null; // null = todavía no se puede saber
   pendientes: number;
+  recuperatorio: number | null; // nota de intensificación o recuperatorio (la última cargada)
 };
 
-export function resumenMateria(notas: Grade[], cfg: BoletinConfig): ResumenMateria {
+export const INSTANCIA = {
+  regular: 'Regular',
+  intensificacion: 'Intensificación',
+  recuperatorio: 'Recuperatorio (dic. / feb.-mar.)',
+} as const;
+export const esRegular = (g: Grade) => !g.instancia || g.instancia === 'regular';
+
+export function resumenMateria(todas: Grade[], cfg: BoletinConfig): ResumenMateria {
+  const notas = todas.filter(esRegular);
+  const extra = todas.filter((g) => !esRegular(g) && g.nota != null).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const recuperatorio = extra.length ? (extra[extra.length - 1].nota as number) : null;
   const c1 = promedio(notas.filter((g) => periodoDe(g) === 1));
   const c2 = promedio(notas.filter((g) => periodoDe(g) === 2));
   const final = c1 != null && c2 != null ? (c1 + c2) / 2 : (c1 ?? c2);
@@ -102,7 +113,9 @@ export function resumenMateria(notas: Grade[], cfg: BoletinConfig): ResumenMater
       ? c1 >= cfg.notaAprobacion && c2 >= cfg.notaAprobacion
       : (final as number) >= cfg.notaAprobacion;
   }
-  return { c1, c2, final, aprobada, pendientes: notas.filter((g) => g.estado === 'pendiente').length };
+  // Si rindió intensificación o recuperatorio, esa nota define si aprobó.
+  if (recuperatorio != null && aprobada !== true) aprobada = recuperatorio >= cfg.notaAprobacion;
+  return { c1, c2, final, aprobada, recuperatorio, pendientes: todas.filter((g) => g.estado === 'pendiente').length };
 }
 
 /** Texto para mostrar una nota: "8,50" o "8,50 · MB". */

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, Chips, ListItem, Muted, Row, Screen, Title } from '../../components/ui';
+import { FECHA_TIPO, fechasDe } from '../../lib/fechas';
 import { ETIQUETA_FERIADO } from '../../lib/holidays';
 import { TIPO_EVENTO } from '../../lib/notifications';
 import { useData } from '../../lib/store';
@@ -69,6 +70,7 @@ export default function Agenda() {
                 if (!c) return <View key={`v${i}`} style={{ width: '14.28%', height: 44 }} />;
                 const evs = eventosDe(c);
                 const fer = feriadoDe(c);
+                const esp = fechasDe(data, c)[0];
                 const sel = c === diaSel;
                 return (
                   <Text
@@ -77,8 +79,8 @@ export default function Agenda() {
                     style={{
                       width: '14.28%', height: 44, textAlign: 'center', textAlignVertical: 'center', lineHeight: 40,
                       borderRadius: 10, overflow: 'hidden', fontWeight: sel ? '800' : '500',
-                      backgroundColor: sel ? colors.primary : fer ? colors.highlight : enReceso(c) ? colors.recess : 'transparent',
-                      color: sel ? colors.onPrimary : fer ? colors.highlightText : colors.text,
+                      backgroundColor: sel ? colors.primary : fer ? colors.highlight : esp ? FECHA_TIPO[esp.tipo].color + '33' : enReceso(c) ? colors.recess : 'transparent',
+                      color: sel ? colors.onPrimary : fer ? colors.highlightText : esp ? FECHA_TIPO[esp.tipo].color : colors.text,
                     }}
                   >
                     {Number(c.slice(8))}{evs.length ? '•' : ''}
@@ -86,12 +88,17 @@ export default function Agenda() {
                 );
               })}
             </View>
-            <Muted>🟧 Feriado / puente · 🟩 Receso escolar · • con eventos</Muted>
+            <Muted>🟧 Feriado / puente · 🟩 Receso escolar · 🟪 Fechas del colegio (intensificación, asueto, paro...) · • con eventos</Muted>
           </Card>
           <Card>
             <Title>{new Date(diaSel + 'T12:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</Title>
             {feriadoDe(diaSel) && <Text style={{ color: colors.highlightText, fontWeight: '700' }}>🎉 {feriadoDe(diaSel)!.nombre} · {ETIQUETA_FERIADO[feriadoDe(diaSel)!.tipo]}</Text>}
             {enReceso(diaSel) && <Text style={{ color: colors.success, fontWeight: '700' }}>🏖️ Receso escolar</Text>}
+            {fechasDe(data, diaSel).map((f) => (
+              <Text key={f.id} style={{ color: FECHA_TIPO[f.tipo].color, fontWeight: '700' }}>
+                {FECHA_TIPO[f.tipo].emoji} {FECHA_TIPO[f.tipo].label}{f.nombre ? `: ${f.nombre}` : ''}{FECHA_TIPO[f.tipo].sinClases ? ' · sin clases' : ''}
+              </Text>
+            ))}
             {eventosDe(diaSel).length === 0 ? <Muted>Sin eventos.</Muted> : eventosDe(diaSel).map(renderEvento)}
           </Card>
         </>
