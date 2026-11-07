@@ -101,7 +101,9 @@ export const INSTANCIA = {
 export const esRegular = (g: Grade) => !g.instancia || g.instancia === 'regular';
 
 export function resumenMateria(todas: Grade[], cfg: BoletinConfig): ResumenMateria {
-  const notas = todas.filter(esRegular);
+  // Por defecto solo se promedian los exámenes; se pueden sumar TPs, entregas y orales.
+  const tipos = cfg.promediar && cfg.promediar.length ? cfg.promediar : ['examen'];
+  const notas = todas.filter((g) => esRegular(g) && tipos.includes(g.tipo));
   const extra = todas.filter((g) => !esRegular(g) && g.nota != null).sort((a, b) => a.fecha.localeCompare(b.fecha));
   const recuperatorio = extra.length ? (extra[extra.length - 1].nota as number) : null;
   const c1 = promedio(notas.filter((g) => periodoDe(g) === 1));
@@ -124,4 +126,14 @@ export function mostrarNota(sistema: SistemaBoletin, n: number | null): string {
   const num = n.toFixed(2).replace('.', ',');
   const c = concepto(sistema, n);
   return c ? `${num} · ${c.sigla}` : num;
+}
+
+/** Materias que van al boletín: todas, salvo los talleres que no forman parte. */
+export const enBoletin = (m: { taller?: boolean; enBoletin?: boolean }) => !m.taller || !!m.enBoletin;
+
+/** Texto corto de qué se promedia: "Solo exámenes" o "Exámenes, TPs y orales". */
+export function textoPromediar(cfg: BoletinConfig): string {
+  const tipos = cfg.promediar && cfg.promediar.length ? cfg.promediar : (['examen'] as GradeTipo[]);
+  if (tipos.length === 1 && tipos[0] === 'examen') return 'Se promedian solo los exámenes.';
+  return `Se promedian: ${tipos.map((t) => TIPO_NOTA[t].toLowerCase()).join(', ')}.`;
 }

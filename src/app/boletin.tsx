@@ -3,7 +3,7 @@ import { Alert, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { ConfigBoletin } from '../components/boletin';
 import { Button, Card, Muted, NotaBadge, Row, Screen, Title } from '../components/ui';
-import { SISTEMAS, concepto, resumenMateria } from '../lib/grades';
+import { SISTEMAS, concepto, enBoletin, resumenMateria, textoPromediar } from '../lib/grades';
 import { compartirArchivo } from '../lib/share';
 import { useData } from '../lib/store';
 import { colors } from '../lib/theme';
@@ -14,7 +14,7 @@ export default function Boletin() {
   const { data } = useData();
   const cfg = data.settings.boletin;
   const [editar, setEditar] = useState(false);
-  const filas = data.subjects.map((m) => ({ m, r: resumenMateria(data.grades.filter((g) => g.subjectId === m.id), cfg) }));
+  const filas = data.subjects.filter(enBoletin).map((m) => ({ m, r: resumenMateria(data.grades.filter((g) => g.subjectId === m.id), cfg) }));
 
   const celda = (n: number | null) => {
     const c = concepto(cfg.sistema, n);
@@ -45,7 +45,7 @@ export default function Boletin() {
       <Card>
         <Title>{SISTEMAS[cfg.sistema].nombre}</Title>
         <Muted>
-          {cfg.cuatrimestres === 'promedian' ? 'Los cuatrimestres se promedian.' : 'Cada cuatrimestre se aprueba por separado.'} Aprobación: {String(cfg.notaAprobacion).replace('.', ',')}
+          {cfg.cuatrimestres === 'promedian' ? 'Los cuatrimestres se promedian.' : 'Cada cuatrimestre se aprueba por separado.'} Aprobación: {String(cfg.notaAprobacion).replace('.', ',')}. {textoPromediar(cfg)}
         </Muted>
         <Row>
           <Button variant="soft" title="Cambiar sistema" onPress={() => setEditar(true)} />

@@ -28,7 +28,7 @@ export const defaultData: AppData = {
   settings: {
     modo: 'sistema',
     paleta: 'azul',
-    boletin: { configurado: false, sistema: 'nacional', cuatrimestres: 'promedian', notaAprobacion: 6 },
+    boletin: { configurado: false, sistema: 'nacional', cuatrimestres: 'promedian', notaAprobacion: 6, promediar: ['examen'] },
     avisosPorDefecto: [1440, 60],
     sonidoPorDefecto: true,
     aiProvider: 'claude',
@@ -40,6 +40,7 @@ export const defaultData: AppData = {
   apuntes: [],
   asistencia: { limite: 25, faltas: [] },
   conducta: { sistema: 'creditos', creditosIniciales: 25, alertaCreditos: 10, alertaAmonestaciones: 20, maximoAmonestaciones: 25, registros: [] },
+  sitios: [],
 };
 
 /** Mezcla datos guardados (o de una copia vieja) con los valores por defecto de esta versión. */

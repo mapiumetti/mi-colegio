@@ -80,3 +80,12 @@ export async function programarAvisos(ev: SchoolEvent, materia?: string): Promis
 export async function cancelarAvisos(ids: string[]) {
   await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => {})));
 }
+
+/** Aviso con sonido dentro de N segundos (cuenta regresiva del reloj). */
+export async function avisarEn(segundos: number, titulo: string, cuerpo: string): Promise<string> {
+  await prepararNotificaciones();
+  return Notifications.scheduleNotificationAsync({
+    content: { title: titulo, body: cuerpo, sound: 'default' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(Date.now() + segundos * 1000), channelId: CANAL_SONIDO },
+  });
+}

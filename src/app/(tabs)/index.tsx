@@ -9,7 +9,7 @@ import { TIPO_EVENTO } from '../../lib/notifications';
 import { abrirPlataforma } from '../../lib/share';
 import { useData } from '../../lib/store';
 import { colors } from '../../lib/theme';
-import { DIAS_LARGO, formatFecha, formatYmd, toMin, ymd } from '../../lib/time';
+import { DIAS_LARGO, bloquesDelDia, formatFecha, formatYmd, toMin, ymd } from '../../lib/time';
 
 export default function Inicio() {
   const { data, update } = useData();
@@ -27,7 +27,7 @@ export default function Inicio() {
   const hoy = new Date();
   const ahora = hoy.getHours() * 60 + hoy.getMinutes();
   const materia = (id?: string) => subjects.find((x) => x.id === id);
-  const clasesHoy = motivoSinClases(data, ymd(new Date())) ? [] : blocks.filter((b) => b.dia === hoy.getDay() && b.tipo === 'materia' && b.subjectId);
+  const clasesHoy = motivoSinClases(data, ymd(new Date())) ? [] : bloquesDelDia(blocks, subjects, hoy.getDay()).filter((b) => (b.tipo === 'materia' || b.tipo === 'taller') && b.subjectId);
   const proximos = events.filter((e) => new Date(e.fecha) >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 4);
   const pendientes = data.grades.filter((g) => g.estado === 'pendiente').length;
   const sinClases = motivoSinClases(data, ymd(hoy));
@@ -82,7 +82,7 @@ export default function Inicio() {
               <ListItem
                 key={b.id}
                 left={<Dot color={m?.color ?? colors.muted} />}
-                title={m?.nombre ?? 'Materia'}
+                title={`${b.tipo === 'taller' ? '🎨 ' : ''}${m?.nombre ?? 'Materia'}`}
                 subtitle={`${b.inicio} – ${b.fin}${m?.aula ? ` · ${m.aula}` : ''}`}
                 right={enCurso ? <Text style={{ color: colors.success, fontWeight: '700' }}>Ahora</Text> : null}
               />

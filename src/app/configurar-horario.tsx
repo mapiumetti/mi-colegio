@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import { Button, Card, Chips, DateField, Field, Muted, Row, Screen, SwitchRow, Title } from '../components/ui';
+import { Button, Card, Chips, DateField, Muted, NumField, Row, Screen, SwitchRow, Title } from '../components/ui';
 import { colors } from '../lib/theme';
 import { useData } from '../lib/store';
-import { DIAS, DIAS_LARGO, TURNO_NOMBRE, dateToHHMM, fromMin, generarBloques, hhmmToDate, horarioTurno, toMin } from '../lib/time';
+import { DIAS, DIAS_LARGO, LIMITE_SIN_TARDE, TURNO_NOMBRE, dateToHHMM, fromMin, generarBloques, hhmmToDate, horarioTurno, soloManana, toMin } from '../lib/time';
 import type { ScheduleConfig, Turno } from '../lib/types';
 
 export default function ConfigurarHorario() {
@@ -13,7 +13,13 @@ export default function ConfigurarHorario() {
   const set = (fn: (c: ScheduleConfig) => ScheduleConfig) => update((d) => ({ ...d, schedule: fn(d.schedule) }));
   const setTurno = (id: Turno['id'], patch: Partial<Turno>) =>
     set((c) => ({ ...c, turnos: c.turnos.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
-  const num = (v: string) => Math.max(0, parseInt(v.replace(/\D/g, ''), 10) || 0);
+  // Campos que el alumno dejó vacíos: no se puede generar el horario hasta completarlos.
+  const [vacios, setVacios] = useState<Record<string, boolean>>({});
+  const marcar = useMemo(() => {
+    const cache: Record<string, (v: boolean) => void> = {};
+    return (k: string) => (cache[k] ??= (v: boolean) => setVacios((x) => (x[k] === v ? x : { ...x, [k]: v })));
+  }, []);
+  const hayVacios = Object.values(vacios).some(Boolean);
   const [diaEdit, setDiaEdit] = useState<number>(cfg.dias[0] ?? 1);
   const recreos = cfg.recreos ?? [];
   const durAlmuerzo = Math.max(0, toMin(cfg.almuerzo.fin) - toMin(cfg.almuerzo.inicio));
@@ -29,13 +35,21 @@ export default function ConfigurarHorario() {
     });
 
   const setRecreos = (lista: { despuesDe: number; duracion: number }[]) =>
-    set((c) => ({ ...c, recreos: [...lista].sort((a, b) => a.despuesDe - b.despuesDe) }));
+    set((c) => ({ ...c, recreos: lista }));
   const agregarRecreo = () => {
     const ult = recreos[recreos.length - 1]?.despuesDe ?? 0;
     setRecreos([...recreos, { despuesDe: ult + 2, duracion: 10 }]);
   };
 
   const generar = () => {
+    if (hayVacios) {
+      Alert.alert('Hay un campo vacío', 'Completá los campos marcados en rojo antes de generar el horario.');
+      return;
+    }
+    if (cfg.duracionModulo < 5) {
+      Alert.alert('Revisá la duración', 'Cada módulo tiene que durar al menos 5 minutos.');
+      return;
+    }
     if (!cfg.turnos.some((t) => t.activo)) {
       Alert.alert('Elegí un turno', 'Activá al menos un turno.');
       return;
@@ -104,11 +118,11 @@ export default function ConfigurarHorario() {
               value={hhmmToDate(cfg.almuerzo.inicio)}
               onChange={(d) => set((c) => ({ ...c, almuerzo: { ...c.almuerzo, inicio: dateToHHMM(d), fin: fromMin(toMin(dateToHHMM(d)) + durAlmuerzo) } }))}
             />
-            <Field
+            <NumField
               label="Duración del almuerzo (minutos)"
-              keyboardType="number-pad"
-              value={String(durAlmuerzo)}
-              onChangeText={(v) => set((c) => ({ ...c, almuerzo: { ...c.almuerzo, fin: fromMin(toMin(c.almuerzo.inicio) + num(v)) } }))}
+              value={durAlmuerzo}
+              onVacio={marcar('almuerzo')}
+              onChange={(n) => set((c) => ({ ...c, almuerzo: { ...c.almuerzo, fin: fromMin(toMin(c.almuerzo.inicio) + n) } }))}
             />
             <Muted>Termina a las {cfg.almuerzo.fin}. Si una clase cae en ese horario, se corre para después del almuerzo.</Muted>
           </>
@@ -117,7 +131,7 @@ export default function ConfigurarHorario() {
 
       <Card>
         <Title>⏰ Módulos</Title>
-        <Field label="Duración de cada materia / módulo (minutos)" keyboardType="number-pad" value={String(cfg.duracionModulo)} onChangeText={(v) => set((c) => ({ ...c, duracionModulo: Math.max(5, num(v)) }))} />
+        <NumField label="Duración de cada materia / módulo (minutos)" value={cfg.duracionModulo} onVacio={marcar('modulo')} onChange={(n) => set((c) => ({ ...c, duracionModulo: n }))} />
       </Card>
 
       <Card>
@@ -125,8 +139,8 @@ export default function ConfigurarHorario() {
         {recreos.length === 0 ? (
           <>
             <Muted>Todos los recreos duran lo mismo. Si algunos son de 5 minutos y otros de 15, tocá "Recreos con distinta duración".</Muted>
-            <Field label="Duración del recreo (minutos)" keyboardType="number-pad" value={String(cfg.recreo.duracion)} onChangeText={(v) => set((c) => ({ ...c, recreo: { ...c.recreo, duracion: num(v) } }))} />
-            <Field label="Recreo cada cuántos módulos" keyboardType="number-pad" value={String(cfg.recreo.cadaModulos)} onChangeText={(v) => set((c) => ({ ...c, recreo: { ...c.recreo, cadaModulos: num(v) } }))} />
+            <NumField label="Duración del recreo (minutos)" value={cfg.recreo.duracion} onVacio={marcar('recreo')} onChange={(n) => set((c) => ({ ...c, recreo: { ...c.recreo, duracion: n } }))} />
+            <NumField label="Recreo cada cuántos módulos" value={cfg.recreo.cadaModulos} onVacio={marcar('cada')} onChange={(n) => set((c) => ({ ...c, recreo: { ...c.recreo, cadaModulos: n } }))} />
             <Button
               variant="soft"
               icon="⏱️"
@@ -143,10 +157,10 @@ export default function ConfigurarHorario() {
             {recreos.map((r, i) => (
               <Row key={i} style={{ flexWrap: 'nowrap' }}>
                 <View style={{ flex: 1 }}>
-                  <Field label="Después del módulo" keyboardType="number-pad" value={String(r.despuesDe)} onChangeText={(v) => setRecreos(recreos.map((x, j) => (j === i ? { ...x, despuesDe: Math.max(1, num(v)) } : x)))} />
+                  <NumField label="Después del módulo" value={r.despuesDe} onVacio={marcar(`rd${i}`)} onChange={(n) => setRecreos(recreos.map((x, j) => (j === i ? { ...x, despuesDe: n } : x)))} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Field label="Minutos" keyboardType="number-pad" value={String(r.duracion)} onChangeText={(v) => setRecreos(recreos.map((x, j) => (j === i ? { ...x, duracion: num(v) } : x)))} />
+                  <NumField label="Minutos" value={r.duracion} onVacio={marcar(`rm${i}`)} onChange={(n) => setRecreos(recreos.map((x, j) => (j === i ? { ...x, duracion: n } : x)))} />
                 </View>
                 <Button variant="danger" title="✕" style={{ marginTop: 18 }} onPress={() => setRecreos(recreos.filter((_, j) => j !== i))} />
               </Row>
@@ -160,6 +174,13 @@ export default function ConfigurarHorario() {
         <Muted>Al generar, se arma la grilla de cada día. Las materias que ya asignaste se conservan si el horario coincide.</Muted>
       </Card>
 
+      {soloManana(cfg) && (
+        <Muted>
+          Como no tenés turno tarde ni noche, el horario de clases no pasa de las {fromMin(LIMITE_SIN_TARDE)}. Los talleres (arte, idiomas...)
+          se cargan aparte en Materias y pueden ser más tarde.
+        </Muted>
+      )}
+      {hayVacios && <Text style={{ color: colors.danger, fontWeight: '700' }}>⚠️ Hay campos vacíos. Completalos para poder generar el horario.</Text>}
       <Button icon="✨" title="Generar horario" onPress={generar} />
     </Screen>
   );
