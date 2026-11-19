@@ -1,22 +1,36 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
-  Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, View,
+  KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, View,
   type StyleProp, type TextInputProps, type ViewStyle,
 } from 'react-native';
 import { colorNota, colors, radius, spacing } from '../lib/theme';
 
-export function Screen({ children, scroll = true, onRefresh }: { children: ReactNode; scroll?: boolean; onRefresh?: () => void }) {
+export function Screen({ children, scroll = true, onRefresh, subirCon }: {
+  children: ReactNode;
+  scroll?: boolean;
+  onRefresh?: () => void;
+  subirCon?: unknown; // cuando cambia este valor, la pantalla vuelve arriba (p. ej. al editar)
+}) {
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (subirCon) ref.current?.scrollTo({ y: 0, animated: true });
+  }, [subirCon]);
   if (!scroll) return <View style={[s.screen, { padding: spacing }]}>{children}</View>;
+  // KeyboardAvoidingView: el teclado no tapa los campos (Android usa pantalla completa "edge to edge").
   return (
-    <ScrollView
-      style={s.screen}
-      contentContainerStyle={{ padding: spacing, paddingBottom: 48, gap: 12 }}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={onRefresh ? <RefreshControl refreshing={false} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} /> : undefined}
-    >
-      {children}
-    </ScrollView>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+      <ScrollView
+        ref={ref}
+        style={s.screen}
+        contentContainerStyle={{ padding: spacing, paddingBottom: 120, gap: 12 }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        refreshControl={onRefresh ? <RefreshControl refreshing={false} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} /> : undefined}
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -52,6 +66,46 @@ export function Field({ label, ...props }: { label: string } & TextInputProps) {
     <View style={{ gap: 4 }}>
       <Text style={s.label}>{label}</Text>
       <TextInput placeholderTextColor={colors.muted} style={s.input} {...props} />
+    </View>
+  );
+}
+
+/**
+ * Campo numérico que se puede dejar vacío mientras se escribe.
+ * Solo guarda el número cuando es válido; si queda vacío muestra una advertencia
+ * y avisa con `onVacio` para que la pantalla no deje confirmar.
+ */
+export function NumField({ label, value, onChange, decimal, onVacio, placeholder }: {
+  label: string; value: number; onChange: (n: number) => void; decimal?: boolean; onVacio?: (vacio: boolean) => void; placeholder?: string;
+}) {
+  const aTexto = (n: number) => String(n).replace('.', ',');
+  const [texto, setTexto] = useState(aTexto(value));
+  const vacio = texto.trim() === '';
+  useEffect(() => {
+    // Si el valor cambia desde afuera, se refleja en el campo.
+    const n = parseFloat(texto.replace(',', '.'));
+    if (!vacio && n !== value) setTexto(aTexto(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  useEffect(() => { onVacio?.(vacio); }, [vacio, onVacio]);
+  useEffect(() => () => onVacio?.(false), [onVacio]);
+  return (
+    <View style={{ gap: 4 }}>
+      <Text style={s.label}>{label}</Text>
+      <TextInput
+        placeholderTextColor={colors.muted}
+        style={[s.input, vacio && { borderColor: colors.danger }]}
+        keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
+        value={texto}
+        placeholder={placeholder}
+        onChangeText={(t) => {
+          const limpio = decimal ? t.replace(/[^\d.,]/g, '') : t.replace(/\D/g, '');
+          setTexto(limpio);
+          const n = parseFloat(limpio.replace(',', '.'));
+          if (!isNaN(n)) onChange(n);
+        }}
+      />
+      {vacio && <Text style={{ color: colors.danger, fontSize: 12, fontWeight: '600' }}>⚠️ Este campo está vacío</Text>}
     </View>
   );
 }

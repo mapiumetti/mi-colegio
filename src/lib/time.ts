@@ -1,4 +1,4 @@
-import type { Block, ScheduleConfig, TurnoId } from './types';
+import type { Block, ScheduleConfig, Subject, TurnoId } from './types';
 import { uid } from './store';
 
 export const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -43,6 +43,10 @@ export function horarioTurno(cfg: ScheduleConfig, dia: number, turnoId: TurnoId)
   return { entrada: o?.entrada ?? t.entrada, salida: o?.salida ?? t.salida };
 }
 
+/** Si solo está el turno mañana, las clases no pasan de las 18 hs (los talleres sí pueden). */
+export const LIMITE_SIN_TARDE = 18 * 60;
+export const soloManana = (cfg: ScheduleConfig) => !cfg.turnos.some((t) => t.activo && t.id !== 'manana');
+
 /** Minutos de recreo después del módulo N (1, 2, 3...) de un turno. */
 function recreoDespuesDe(cfg: ScheduleConfig, n: number): number {
   if (cfg.recreos && cfg.recreos.length > 0) return cfg.recreos.find((r) => r.despuesDe === n)?.duracion ?? 0;
@@ -67,6 +71,7 @@ export function generarBloques(cfg: ScheduleConfig, prev: Block[]): Block[] {
       let t = toMin(h.entrada);
       let fin = toMin(h.salida);
       if (fin <= t) fin += 24 * 60; // turno noche que pasa la medianoche
+      if (soloManana(cfg)) fin = Math.min(fin, LIMITE_SIN_TARDE);
       let modulos = 0;
       while (t + cfg.duracionModulo <= fin) {
         if (cfg.almuerzo.activo && almFin > almIni && t < almFin && t + cfg.duracionModulo > almIni) {
@@ -98,3 +103,18 @@ export function generarBloques(cfg: ScheduleConfig, prev: Block[]): Block[] {
   }
   return out.sort((a, b) => a.dia - b.dia || toMin(a.inicio) - toMin(b.inicio));
 }
+
+/** Horarios de los talleres de un día, como bloques para mostrar junto a las clases. */
+export function bloquesTaller(subjects: Subject[], dia: number): Block[] {
+  return subjects
+    .filter((m) => m.taller)
+    .flatMap((m) =>
+      (m.horarios ?? [])
+        .filter((h) => h.dia === dia)
+        .map((h): Block => ({ id: `t-${h.id}`, dia, inicio: h.inicio, fin: h.fin, tipo: 'taller', turno: toMin(h.inicio) >= 18 * 60 ? 'noche' : toMin(h.inicio) >= 13 * 60 ? 'tarde' : 'manana', subjectId: m.id })),
+    );
+}
+
+/** Clases y talleres de un día, ordenados por hora. */
+export const bloquesDelDia = (blocks: Block[], subjects: Subject[], dia: number) =>
+  [...blocks.filter((b) => b.dia === dia), ...bloquesTaller(subjects, dia)].sort((a, b) => toMin(a.inicio) - toMin(b.inicio));

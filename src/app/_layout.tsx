@@ -57,6 +57,10 @@ function App() {
         <Stack.Screen name="herramientas/conversor" options={{ title: 'Conversor de unidades' }} />
         <Stack.Screen name="herramientas/tabla-periodica" options={{ title: 'Tabla periódica' }} />
         <Stack.Screen name="herramientas/fisica" options={{ title: 'Fórmulas de física' }} />
+        <Stack.Screen name="herramientas/matematica" options={{ title: 'Fórmulas de matemática' }} />
+        <Stack.Screen name="herramientas/graficador" options={{ title: 'Graficador de funciones' }} />
+        <Stack.Screen name="herramientas/reloj" options={{ title: 'Reloj' }} />
+        <Stack.Screen name="herramientas/sitios" options={{ title: 'Mis Sitios' }} />
         <Stack.Screen name="apuntes/index" options={{ title: 'Apuntes' }} />
         <Stack.Screen name="apuntes/[id]" options={{ title: 'Apunte' }} />
       </Stack>

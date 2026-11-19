@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Text } from 'react-native';
-import { SISTEMAS, sistemaSugerido } from '../lib/grades';
+import { SISTEMAS, TIPO_NOTA, sistemaSugerido } from '../lib/grades';
 import { useData } from '../lib/store';
 import { colors } from '../lib/theme';
-import type { BoletinConfig, SistemaBoletin } from '../lib/types';
+import type { BoletinConfig, GradeTipo, SistemaBoletin } from '../lib/types';
 import { Button, Card, Chips, Field, Muted, Title } from './ui';
 
 /** Asistente para configurar cómo es el boletín del colegio. */
@@ -42,6 +42,17 @@ export function ConfigBoletin({ alTerminar }: { alTerminar?: () => void }) {
         keyboardType="decimal-pad"
         value={String(cfg.notaAprobacion).replace('.', ',')}
         onChangeText={(v) => setCfg({ ...cfg, notaAprobacion: parseFloat(v.replace(',', '.')) || 0 })}
+      />
+      <Muted>4. ¿Qué notas se promedian? (Por defecto, solo los exámenes.)</Muted>
+      <Chips
+        multi
+        options={(Object.keys(TIPO_NOTA) as GradeTipo[]).map((t) => ({ value: t, label: TIPO_NOTA[t] }))}
+        value={cfg.promediar ?? ['examen']}
+        onChange={(t) => {
+          const act = cfg.promediar ?? ['examen'];
+          const sig = act.includes(t) ? act.filter((x) => x !== t) : [...act, t];
+          setCfg({ ...cfg, promediar: sig.length ? sig : ['examen'] });
+        }}
       />
       <Button title="Guardar" onPress={guardar} />
     </Card>

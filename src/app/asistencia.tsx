@@ -35,10 +35,13 @@ export default function AsistenciaConducta() {
   const [justificada, setJustificada] = useState(false);
   const [certificado, setCertificado] = useState<string | undefined>();
   const [nota, setNota] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const limpiarFalta = () => { setCertificado(undefined); setNota(''); setJustificada(false); setValor(1); setEditId(null); setFecha(new Date()); };
 
   const total = asis.faltas.reduce((a, f) => a + f.valor, 0);
   const totalJust = asis.faltas.filter((f) => f.justificada).reduce((a, f) => a + f.valor, 0);
   const quedan = asis.limite - total;
+  const valorAnterior = editId ? asis.faltas.find((f) => f.id === editId)?.valor ?? 0 : 0;
 
   const adjuntar = async (desde: 'camara' | 'archivo') => {
     const dir = subcarpeta('Certificados');
@@ -69,20 +72,16 @@ export default function AsistenciaConducta() {
       `${formatYmd(dia)}: ${fraccion(valor)} de falta ${justificada ? 'JUSTIFICADA' : 'sin justificar'}.` +
       `${justificada && !certificado ? '\n\nTodavía no adjuntaste el certificado (lo podés agregar después).' : ''}` +
       `${sin ? `\n\nOjo: ese día figura sin clases (${sin}).` : ''}` +
-      `\n\nTe quedarían ${fmt(quedan - valor)} faltas.`;
-    Alert.alert('¿Confirmar falta?', texto, [
+      `\n\nTe quedarían ${fmt(quedan + valorAnterior - valor)} faltas.`;
+    Alert.alert(editId ? '¿Guardar cambios?' : '¿Confirmar falta?', texto, [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Confirmar',
         onPress: () => {
-          setAsis((a) => ({
-            ...a,
-            faltas: [...a.faltas, { id: uid(), fecha: dia, valor, justificada, certificadoUri: justificada ? certificado : undefined, nota: nota.trim() || undefined }],
-          }));
-          setCertificado(undefined);
-          setNota('');
-          setJustificada(false);
-          const restan = quedan - valor;
+          const falta = { id: editId ?? uid(), fecha: dia, valor, justificada, certificadoUri: justificada ? certificado : undefined, nota: nota.trim() || undefined };
+          setAsis((a) => ({ ...a, faltas: editId ? a.faltas.map((x) => (x.id === editId ? falta : x)) : [...a.faltas, falta] }));
+          const restan = quedan + valorAnterior - valor;
+          limpiarFalta();
           if (restan <= 0) Alert.alert('⚠️ Límite alcanzado', 'Llegaste al total de faltas permitido. Consultá con preceptoría por la reincorporación.');
           else if (restan <= 5) Alert.alert('⚠️ Atención', `Te quedan solo ${fmt(restan)} faltas.`);
         },
@@ -95,7 +94,17 @@ export default function AsistenciaConducta() {
     if (!f) return;
     Alert.alert(`${formatYmd(f.fecha)} · ${fraccion(f.valor)}`, f.nota, [
       ...(f.certificadoUri ? [{ text: 'Ver certificado', onPress: () => verCertificado(f.certificadoUri!) }] : []),
-      { text: f.justificada ? 'Marcar sin justificar' : 'Marcar justificada', onPress: () => setAsis((a) => ({ ...a, faltas: a.faltas.map((x) => (x.id === id ? { ...x, justificada: !x.justificada } : x)) })) },
+      {
+        text: 'Editar',
+        onPress: () => {
+          setEditId(f.id);
+          setFecha(new Date(`${f.fecha}T12:00`));
+          setValor(f.valor);
+          setJustificada(f.justificada);
+          setCertificado(f.certificadoUri);
+          setNota(f.nota ?? '');
+        },
+      },
       { text: 'Borrar', style: 'destructive', onPress: () => setAsis((a) => ({ ...a, faltas: a.faltas.filter((x) => x.id !== id) })) },
       { text: 'Cancelar', style: 'cancel' },
     ]);
@@ -142,6 +151,7 @@ export default function AsistenciaConducta() {
           onPress: () => {
             setCond((c) => ({ ...c, registros: [...c.registros, { id: uid(), fecha: hoy, valor: valorSancion, motivo: motivo.trim() }] }));
             setMotivo('');
+            setValorSancion(0.25);
             if (esCreditos ? nuevo <= 0 : nuevo >= cond.maximoAmonestaciones) Alert.alert('🚨 Máximo alcanzado', esCreditos ? 'Te quedaste sin créditos.' : 'Llegaste al máximo de amonestaciones.');
             else if (esCreditos ? nuevo <= cond.alertaCreditos : nuevo >= cond.alertaAmonestaciones)
               Alert.alert('⚠️ Atención', esCreditos ? `Te quedan ${fmt(nuevo)} créditos.` : `Llevás ${fmt(nuevo)} amonestaciones.`);
@@ -152,7 +162,7 @@ export default function AsistenciaConducta() {
   };
 
   return (
-    <Screen>
+    <Screen subirCon={editId}>
       {/* Resumen de faltas */}
       <Card>
         <Title>🙋 Asistencia</Title>
@@ -178,7 +188,7 @@ export default function AsistenciaConducta() {
 
       {/* Cargar falta */}
       <Card>
-        <Title>Cargar falta</Title>
+        <Title>{editId ? '✏️ Editar falta' : 'Cargar falta'}</Title>
         <DateField label="Día" mode="date" value={fecha} onChange={setFecha} />
         <Chips options={VALORES.map((v) => ({ value: v, label: fraccion(v) }))} value={valor} onChange={setValor} />
         <SwitchRow label="☑️ La falta está justificada" value={justificada} onChange={setJustificada} />
@@ -197,7 +207,8 @@ export default function AsistenciaConducta() {
           </>
         )}
         <Field label="Nota (opcional)" placeholder="Turno médico, llegada tarde..." value={nota} onChangeText={setNota} />
-        <Button icon="✔️" title="Confirmar falta" onPress={confirmarFalta} />
+        <Button icon="✔️" title={editId ? 'Guardar cambios' : 'Confirmar falta'} onPress={confirmarFalta} />
+        {editId && <Button variant="soft" title="Cancelar edición" onPress={limpiarFalta} />}
       </Card>
 
       {/* Calendario */}
@@ -239,6 +250,7 @@ export default function AsistenciaConducta() {
       {asis.faltas.length > 0 && (
         <Card>
           <Title>Faltas cargadas</Title>
+          <Muted>Tocá o mantené presionada una falta para editarla, ver el certificado o borrarla.</Muted>
           {[...asis.faltas].sort((a, b) => b.fecha.localeCompare(a.fecha)).map((f) => (
             <ListItem
               key={f.id}
@@ -246,6 +258,7 @@ export default function AsistenciaConducta() {
               title={`${formatYmd(f.fecha)} · ${fraccion(f.valor)}`}
               subtitle={[f.justificada ? 'Justificada' : 'Sin justificar', f.certificadoUri ? '📎 certificado' : '', f.nota].filter(Boolean).join(' · ')}
               onPress={() => opcionesFalta(f.id)}
+              onLongPress={() => opcionesFalta(f.id)}
             />
           ))}
         </Card>
@@ -267,7 +280,18 @@ export default function AsistenciaConducta() {
           {alMaximo ? <Text style={{ color: colors.danger, fontWeight: '800' }}>🚨 Llegaste al máximo</Text> : enAlerta ? <Text style={{ color: '#B45309', fontWeight: '800' }}>⚠️ Atención</Text> : null}
         </View>
         <Muted>{esCreditos ? 'Se descuentan créditos de a 1 o fracciones de 0,25.' : 'Las amonestaciones se suman desde 0, de a 1 o fracciones de 0,25.'}</Muted>
-        <Chips options={VALORES.map((v) => ({ value: v, label: fmt(v) }))} value={valorSancion} onChange={setValorSancion} />
+        <Muted>Cantidad de este incidente (podés usar − y + de a 0,25):</Muted>
+        <Row style={{ justifyContent: 'center', flexWrap: 'nowrap' }}>
+          <Button variant="soft" title="−" style={{ minWidth: 56 }} onPress={() => setValorSancion((v) => Math.max(0.25, Math.round((v - 0.25) * 100) / 100))} />
+          <Text style={{ fontSize: 30, fontWeight: '800', color: colors.text, minWidth: 90, textAlign: 'center' }}>{fmt(valorSancion)}</Text>
+          <Button variant="soft" title="+" style={{ minWidth: 56 }} onPress={() => setValorSancion((v) => Math.round((v + 0.25) * 100) / 100)} />
+        </Row>
+        <Row style={{ justifyContent: 'center' }}>
+          {[1, 2, 5].map((n) => (
+            <Button key={n} variant="soft" title={`+${n}`} onPress={() => setValorSancion((v) => v + n)} />
+          ))}
+          <Button variant="soft" title="Volver a 0,25" onPress={() => setValorSancion(0.25)} />
+        </Row>
         <Field label="Motivo (opcional)" placeholder="Uso del celular, llegada tarde..." value={motivo} onChangeText={setMotivo} />
         <Button variant={esCreditos ? 'danger' : 'primary'} icon={esCreditos ? '➖' : '➕'} title={esCreditos ? 'Descontar créditos' : 'Sumar amonestaciones'} onPress={cargarSancion} />
 

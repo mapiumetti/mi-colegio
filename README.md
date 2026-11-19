@@ -56,6 +56,15 @@ npx expo start
 - **Asistencia y conducta** (Más): faltas de ¼, ½, ¾ y 1, justificadas o no, con foto o PDF del certificado; límite de faltas (25 por defecto); calendario mensual por colores; conducta por créditos (25, aviso en 10) o amonestaciones (aviso en 20, máximo 25), todo editable.
 - **Modo concentración:** activa el "No molestar" de Android desde la app (módulo nativo propio en `modules/concentracion`). En iPhone Apple no lo permite, así que se explica cómo hacerlo a mano.
 
+## Versión 4
+
+- **Notas:** por defecto solo se promedian los exámenes; en la configuración del boletín se eligen también TPs, entregas u orales. Las notas y tareas se editan manteniéndolas presionadas (Editar / Borrar / Cancelar).
+- **Asistencia y conducta:** las faltas se editan manteniéndolas presionadas; la cantidad de créditos o amonestaciones de un incidente se ajusta con − y + (de a 0,25, o +1, +2, +5).
+- **Turnos y horarios:** el teclado ya no tapa los campos y los números se pueden borrar; si un campo queda vacío se marca en rojo y no deja generar el horario. Sin turno tarde ni noche, las clases no pasan de las 18 hs.
+- **Talleres:** arte, idioma, canto, actuación... se cargan en Materias como extras, con sus propios días y horarios (hasta la noche); al crearlos se pregunta si van en el boletín. Se ven en Horario e Inicio.
+- **Herramientas:** Mis Sitios (enlaces favoritos), diccionarios (RAE, Dudas del español, WordReference en varios idiomas, Cambridge), reloj con hora, cronómetro, cuenta regresiva con aviso y alarmas del reloj del teléfono, fórmulas de matemática (potencias, raíces, logaritmos, trigonometría, derivadas, tabla de integrales, geometría y más) y graficador de funciones en el plano XY (`react-native-svg`).
+- **Educ.ar:** Biología, PDL – Lengua, Ciencias Sociales, Física y Química, Matemática, Ciencias Naturales, Ciencia y Tecnología, Física Técnica, Química Superior y Educación Tecnológica.
+
 ## Notas importantes
 
 - **Feriados (18):** argentina.gob.ar no tiene una API, así que la app usa [ArgentinaDatos](https://argentinadatos.com) (`api.argentinadatos.com/v1/feriados/{año}`), un servicio abierto que replica los feriados oficiales incluidos los puentes. Las fechas del calendario escolar cambian por provincia y por año, por eso se cargan a mano desde la página oficial (hay un botón que la abre). Una mejora futura es tener esas fechas precargadas por provincia.

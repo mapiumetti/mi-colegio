@@ -28,7 +28,13 @@ export type Subject = {
   profesor: string;
   aula: string;
   color: string;
+  // Talleres (arte, idioma, canto, actuación...): materias extra con sus propios horarios.
+  taller?: boolean;
+  enBoletin?: boolean; // un taller solo figura en el boletín si se eligió así
+  horarios?: HorarioTaller[];
 };
+
+export type HorarioTaller = { id: string; dia: number; inicio: string; fin: string };
 
 export type TurnoId = 'manana' | 'tarde' | 'noche';
 
@@ -52,7 +58,7 @@ export type ScheduleConfig = {
   porDia?: Record<string, Partial<Record<TurnoId, { entrada: string; salida: string }>>>;
 };
 
-export type BlockTipo = 'materia' | 'recreo' | 'almuerzo';
+export type BlockTipo = 'materia' | 'recreo' | 'almuerzo' | 'taller';
 
 export type Block = {
   id: string;
@@ -102,6 +108,7 @@ export type BoletinConfig = {
   sistema: SistemaBoletin;
   cuatrimestres: 'promedian' | 'individual';
   notaAprobacion: number;
+  promediar?: GradeTipo[]; // qué notas entran en el promedio (por defecto, solo exámenes)
 };
 
 export type Apunte = { id: string; subjectId?: string; titulo: string; texto: string; fecha: string };
@@ -131,7 +138,10 @@ export type AppData = {
   apuntes: Apunte[];
   asistencia: Asistencia;
   conducta: Conducta;
+  sitios: Sitio[];
 };
+
+export type Sitio = { id: string; nombre: string; url: string };
 
 export type Holiday = {
   fecha: string; // "YYYY-MM-DD"

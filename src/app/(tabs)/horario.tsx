@@ -4,16 +4,18 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, Card, Chips, Muted, Row, Screen, Title, s } from '../../components/ui';
 import { useData } from '../../lib/store';
 import { colors } from '../../lib/theme';
-import { DIAS, TURNO_NOMBRE } from '../../lib/time';
+import { DIAS, TURNO_NOMBRE, bloquesDelDia } from '../../lib/time';
 import type { Block } from '../../lib/types';
 
 export default function Horario() {
   const { data, update } = useData();
-  const diasCfg = data.schedule.dias;
+  // Días de clase, más los días que solo tienen taller (p. ej. sábado).
+  const diasTaller = data.subjects.filter((m) => m.taller).flatMap((m) => (m.horarios ?? []).map((h) => h.dia));
+  const diasCfg = [...new Set([...data.schedule.dias, ...diasTaller])].sort((a, b) => (a || 7) - (b || 7));
   const hoy = new Date().getDay();
   const [dia, setDia] = useState(diasCfg.includes(hoy) ? hoy : diasCfg[0] ?? 1);
   const [editando, setEditando] = useState<Block | null>(null);
-  const bloques = data.blocks.filter((b) => b.dia === dia);
+  const bloques = bloquesDelDia(data.blocks, data.subjects, dia);
   const materia = (id?: string) => data.subjects.find((x) => x.id === id);
 
   const asignar = (subjectId: string | undefined) => {
@@ -31,7 +33,7 @@ export default function Horario() {
 
       <Chips options={diasCfg.map((d) => ({ value: d, label: DIAS[d] }))} value={dia} onChange={setDia} />
 
-      {data.blocks.length === 0 ? (
+      {bloques.length === 0 && data.blocks.length === 0 ? (
         <Card>
           <Title>Armá tu horario</Title>
           <Muted>
@@ -44,7 +46,19 @@ export default function Horario() {
         <Card>
           {bloques.map((b, i) => {
             const m = materia(b.subjectId);
-            const cambioTurno = i > 0 && bloques[i - 1].turno !== b.turno && b.tipo !== 'almuerzo';
+            const cambioTurno = i > 0 && bloques[i - 1].turno !== b.turno && b.tipo === 'materia';
+            if (b.tipo === 'taller') {
+              return (
+                <Pressable
+                  key={b.id}
+                  onPress={() => m && router.push({ pathname: '/materia/[id]', params: { id: m.id } })}
+                  style={{ flexDirection: 'row', gap: 12, padding: 12, marginVertical: 4, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: m?.color ?? colors.border, backgroundColor: m ? `${m.color}18` : colors.bg }}
+                >
+                  <Text style={{ width: 96, color: colors.muted }}>{b.inicio} – {b.fin}</Text>
+                  <Text style={{ fontWeight: '700', color: colors.text, flex: 1 }}>🎨 {m?.nombre ?? 'Taller'}</Text>
+                </Pressable>
+              );
+            }
             if (b.tipo !== 'materia') {
               return (
                 <View key={b.id} style={{ paddingVertical: 6, alignItems: 'center' }}>
