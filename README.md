@@ -65,6 +65,13 @@ npx expo start
 - **Herramientas:** Mis Sitios (enlaces favoritos), diccionarios (RAE, Dudas del español, WordReference en varios idiomas, Cambridge), reloj con hora, cronómetro, cuenta regresiva con aviso y alarmas del reloj del teléfono, fórmulas de matemática (potencias, raíces, logaritmos, trigonometría, derivadas, tabla de integrales, geometría y más) y graficador de funciones en el plano XY (`react-native-svg`).
 - **Educ.ar:** Biología, PDL – Lengua, Ciencias Sociales, Física y Química, Matemática, Ciencias Naturales, Ciencia y Tecnología, Física Técnica, Química Superior y Educación Tecnológica.
 
+## Versión 5: Pizarra
+
+- **Pizarra** (Más → Pizarra, o Herramientas): lápiz y resaltador en colores y grosores, goma, texto, deshacer y rehacer, fondo liso, cuadriculado o con renglones. Se guarda sola y se puede exportar como imagen a la carpeta de la materia o compartir.
+- **Figuras:** línea, flecha, rectángulo, cuadrado, círculo, elipse, triángulos, rombo, trapecio, paralelogramo, pentágono, hexágono y estrella; cuerpos con aristas ocultas punteadas: cubo, prismas, pirámide, tetraedro, octaedro, cilindro, cono y esfera. Se eligen, mueven, duplican y cambian de color o relleno.
+- **Recortes:** una figura se puede recortar con otra (restar, intersección o unir), por ejemplo un cuadrado menos un círculo (máscaras de `react-native-svg`); "Separar" las vuelve a dividir.
+- **Resolver con IA:** la pizarra se manda como imagen para resolver ecuaciones, problemas de geometría o física, pasar la letra a texto o revisar una resolución. Con clave de API la respuesta aparece en la app y se guarda en Apuntes; sin clave, se copia la pregunta y se comparte la imagen con la app de IA instalada (gratis).
+
 ## Notas importantes
 
 - **Feriados (18):** argentina.gob.ar no tiene una API, así que la app usa [ArgentinaDatos](https://argentinadatos.com) (`api.argentinadatos.com/v1/feriados/{año}`), un servicio abierto que replica los feriados oficiales incluidos los puentes. Las fechas del calendario escolar cambian por provincia y por año, por eso se cargan a mano desde la página oficial (hay un botón que la abre). Una mejora futura es tener esas fechas precargadas por provincia.
