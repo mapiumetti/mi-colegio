@@ -41,6 +41,7 @@ export const defaultData: AppData = {
   asistencia: { limite: 25, faltas: [] },
   conducta: { sistema: 'creditos', creditosIniciales: 25, alertaCreditos: 10, alertaAmonestaciones: 20, maximoAmonestaciones: 25, registros: [] },
   sitios: [],
+  pizarras: [],
 };
 
 /** Mezcla datos guardados (o de una copia vieja) con los valores por defecto de esta versión. */

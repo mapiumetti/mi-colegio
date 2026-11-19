@@ -61,6 +61,8 @@ function App() {
         <Stack.Screen name="herramientas/graficador" options={{ title: 'Graficador de funciones' }} />
         <Stack.Screen name="herramientas/reloj" options={{ title: 'Reloj' }} />
         <Stack.Screen name="herramientas/sitios" options={{ title: 'Mis Sitios' }} />
+        <Stack.Screen name="pizarra/index" options={{ title: 'Pizarra' }} />
+        <Stack.Screen name="pizarra/[id]" options={{ title: 'Pizarra' }} />
         <Stack.Screen name="apuntes/index" options={{ title: 'Apuntes' }} />
         <Stack.Screen name="apuntes/[id]" options={{ title: 'Apunte' }} />
       </Stack>

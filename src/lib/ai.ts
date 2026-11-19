@@ -76,3 +76,53 @@ export async function preguntar(p: AiProviderId, modelo: string, mensajes: Mensa
       throw new Error('Este proveedor se usa abriendo su app.');
   }
 }
+
+/** Pregunta a la IA mostrándole una imagen (la pizarra), con la clave de API cargada. */
+export async function preguntarConImagen(p: AiProviderId, modelo: string, pregunta: string, pngBase64: string): Promise<string> {
+  const clave = await leerClave(p);
+  if (!clave) throw new Error('Falta cargar la clave de API de este proveedor (Más → Asistente IA).');
+  switch (p) {
+    case 'claude': {
+      const j = await postJson(
+        'https://api.anthropic.com/v1/messages',
+        { 'x-api-key': clave, 'anthropic-version': '2023-06-01' },
+        {
+          model: modelo, max_tokens: 4096, system: SISTEMA,
+          messages: [{ role: 'user', content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: pngBase64 } },
+            { type: 'text', text: pregunta },
+          ] }],
+        },
+      );
+      return (j.content ?? []).filter((b: { type: string }) => b.type === 'text').map((b: { text: string }) => b.text).join('\n');
+    }
+    case 'chatgpt':
+    case 'grok': {
+      const url = p === 'chatgpt' ? 'https://api.openai.com/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions';
+      const j = await postJson(url, { Authorization: `Bearer ${clave}` }, {
+        model: modelo,
+        messages: [
+          { role: 'system', content: SISTEMA },
+          { role: 'user', content: [
+            { type: 'image_url', image_url: { url: `data:image/png;base64,${pngBase64}` } },
+            { type: 'text', text: pregunta },
+          ] },
+        ],
+      });
+      return j.choices?.[0]?.message?.content ?? '';
+    }
+    case 'gemini': {
+      const j = await postJson(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
+        { 'x-goog-api-key': clave },
+        {
+          systemInstruction: { parts: [{ text: SISTEMA }] },
+          contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/png', data: pngBase64 } }, { text: pregunta }] }],
+        },
+      );
+      return (j.candidates?.[0]?.content?.parts ?? []).map((x: { text?: string }) => x.text ?? '').join('');
+    }
+    default:
+      throw new Error('Este proveedor no se puede usar desde la app: usá "Enviar a la app de IA".');
+  }
+}

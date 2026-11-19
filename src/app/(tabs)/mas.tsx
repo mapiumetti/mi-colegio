@@ -4,6 +4,7 @@ import { Screen, Title } from '../../components/ui';
 import { colors } from '../../lib/theme';
 
 const ITEMS: { icon: string; label: string; href: Href }[] = [
+  { icon: '🖊️', label: 'Pizarra', href: '/pizarra' },
   { icon: '🎧', label: 'Concentración', href: '/concentracion' },
   { icon: '🙋', label: 'Asistencia y conducta', href: '/asistencia' },
   { icon: '🧰', label: 'Herramientas', href: '/herramientas' },

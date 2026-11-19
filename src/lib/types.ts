@@ -139,9 +139,28 @@ export type AppData = {
   asistencia: Asistencia;
   conducta: Conducta;
   sitios: Sitio[];
+  pizarras: Pizarra[];
 };
 
 export type Sitio = { id: string; nombre: string; url: string };
+
+/** Un elemento de la pizarra: trazo a mano, figura, texto o recorte entre dos figuras. */
+export type Trazo = {
+  id: string;
+  tipo: string; // 'lapiz' | 'resaltador' | 'texto' | 'combo' | id de figura (ver lib/pizarra.ts)
+  color: string;
+  grosor: number;
+  relleno?: boolean;
+  puntos?: number[]; // x0, y0, x1, y1... (lápiz)
+  x1?: number; y1?: number; x2?: number; y2?: number; // caja de la figura o posición del texto
+  texto?: string;
+  tam?: number;
+  op?: 'restar' | 'intersecar' | 'unir'; // recorte: a − b, a ∩ b, a ∪ b
+  a?: Trazo;
+  b?: Trazo;
+};
+
+export type Pizarra = { id: string; titulo: string; subjectId?: string; fecha: string; fondo: 'liso' | 'cuadricula' | 'renglones'; trazos: Trazo[] };
 
 export type Holiday = {
   fecha: string; // "YYYY-MM-DD"

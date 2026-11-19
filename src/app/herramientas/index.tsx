@@ -11,6 +11,7 @@ const SECCIONES: { titulo: string; items: Item[] }[] = [
   {
     titulo: 'Para estudiar',
     items: [
+      { icon: '🖊️', label: 'Pizarra', href: '/pizarra' },
       { icon: '📝', label: 'Apuntes', href: '/apuntes' },
       { icon: '📏', label: 'Conversor de unidades', href: '/herramientas/conversor' },
       { icon: '⚗️', label: 'Tabla periódica', href: '/herramientas/tabla-periodica' },
